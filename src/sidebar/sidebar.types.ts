@@ -22,6 +22,10 @@ export type Browser = {
   cursor: number;
   scrollTop: number;
   showHidden: boolean;
+  /** What was typed to narrow the folders, matched like the file list; empty shows them all. */
+  query: string;
+  /** Whether letters are typed into `query` (they are commands otherwise). */
+  filtering: boolean;
 };
 
 /** The files one chat has changed, in place of the chat list. */

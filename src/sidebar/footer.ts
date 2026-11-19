@@ -55,6 +55,15 @@ export function footer(ctx: SidebarContext): string[] {
     return [truncateLine(first, width), footerHints.files(bindings, { typed: mode.query !== '' })];
   }
 
+  if (mode.kind === 'browse' && mode.filtering) {
+    const typed = mode.query === '' ? '' : takeLastColumns(`/ ${mode.query}_`, width);
+
+    return [
+      truncateLine(typed || state.message || 'type to filter', width),
+      footerHints.browserFilter(bindings, { typed: mode.query !== '' }),
+    ];
+  }
+
   if (mode.kind === 'profiles') return ['', footerHints.profiles(bindings)];
 
   return listFooter(ctx);

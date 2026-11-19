@@ -1,11 +1,10 @@
 import { filterBy } from '../files/fuzzy.ts';
 import type { Bindings } from '../keys/bindings.ts';
-import { fromTerminal, isPrintable, typedText } from '../keys/key.ts';
-import type { ActionId } from '../keys/registry.ts';
-import { withoutLastGrapheme } from '../terminal/width.utils.ts';
+import { fromTerminal } from '../keys/key.ts';
 import type { Key } from './keys.ts';
 import { MODE_NAMES } from './sidebar.constants.ts';
 import type { Mode } from './sidebar.types.ts';
+import { editedQuery } from './text-input.utils.ts';
 import type { Row } from './view.ts';
 
 /**
@@ -20,15 +19,6 @@ function bestMatch(list: Row[], query: string): string | undefined {
   });
 
   return best?.key;
-}
-
-/** The query after this key, or nothing when the key doesn't edit it. */
-function editedQuery(query: string, action: ActionId | undefined, key: Key): string | undefined {
-  if (action === 'text.erase') return withoutLastGrapheme(query);
-
-  const read = fromTerminal(key);
-
-  return read !== undefined && isPrintable(read) ? query + typedText(read) : undefined;
 }
 
 /** What searching reads and changes of the sidebar; a `SidebarContext` is one. */

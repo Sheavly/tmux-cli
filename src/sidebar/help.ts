@@ -59,6 +59,12 @@ export const footerHints = {
       [['text.submit'], 'view'],
       [['text.cancel'], params.typed ? 'clear' : 'back'],
     ]),
+  /** What can be done while typing to narrow the folders of the browser. */
+  browserFilter: (bindings: Bindings, params: { typed: boolean }): string =>
+    hints(bindings, [
+      [['text.submit'], 'open'],
+      [['text.cancel'], params.typed ? 'clear' : 'back'],
+    ]),
   profiles: (bindings: Bindings): string =>
     hints(bindings, [
       [['navigation.open'], 'switch'],
@@ -169,6 +175,7 @@ export function browserHelp(bindings: Bindings): string[] {
     ...line(bindings, ['navigation.open', 'browser.into'], 'go into the folder'),
     ...some([
       'browser.parent',
+      'browser.filter',
       'browser.newHere',
       'browser.home',
       'browser.hidden',

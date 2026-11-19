@@ -183,6 +183,42 @@ test('the sidebar with its keys as they always were', options, async () => {
   await gone(pane, 'alpha/');
 });
 
+test('s in the folder browser filters the folders as the file list does', options, async () => {
+  await writeConfig({});
+
+  const pane = await start('sidebar-filter', ['sidebar']);
+
+  await shows(pane, '? help');
+  await type(pane, 'N');
+  await shows(pane, 'alpha/');
+  await shows(pane, 'beta/');
+
+  // Letters are commands until the filter starts; then they are typed, whatever they are bound to.
+  await type(pane, 's');
+  await shows(pane, '⏎ open');
+  await type(pane, 'ba');
+  await shows(pane, '/ ba_');
+  await gone(pane, 'alpha/');
+  await shows(pane, '(1/2)');
+
+  // Escape clears what was typed, and the next one goes back to the commands.
+  await press(pane, 'Escape');
+  await shows(pane, 'alpha/');
+  await press(pane, 'Escape');
+  await gone(pane, '⏎ open');
+  await shows(pane, '? help');
+
+  // Enter goes into the folder under the cursor, and ends the filter.
+  await type(pane, 's');
+  await type(pane, 'bet');
+  await gone(pane, 'alpha/');
+  await press(pane, 'Enter');
+  await shows(pane, 'beta');
+  await gone(pane, '/ bet_');
+  await type(pane, 'q');
+  await gone(pane, 'beta');
+});
+
 test('the viewer answers to rebound keys and not to the old ones', options, async () => {
   await writeConfig({ viewer: { close: 'x', scrollDown: 's' } });
 

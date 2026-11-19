@@ -56,6 +56,7 @@
       "parent": ["Left", "h", "BSpace"],
       "into": ["Right", "l"],
       "cancel": ["Escape", "q"],
+      "filter": "s",
       "home": "~",
       "hidden": ".",
       "newHere": ["o", "Space"]
