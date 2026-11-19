@@ -190,6 +190,9 @@ export function createSession(params: {
       workspace: target.workspace,
       startedAt,
       pid: 0,
+      active: false,
+      width: 0,
+      height: 0,
     };
   }
 
@@ -271,6 +274,9 @@ export function createSession(params: {
       workspace: '',
       startedAt: 0,
       pid: 0,
+      active: false,
+      width: 0,
+      height: 0,
     };
   }
 
@@ -296,16 +302,15 @@ export function createSession(params: {
    * Gives every parked window the size of the content pane. A chat swapped in at another size gets
    * resized, its text reflows and its redraw erases the wrong rows, which leaves the doubled lines
    * a resize used to leave behind. Equal sizes mean a swap changes nothing for the program.
+   * `panes` is a listing the caller just made; without one it is read here.
    */
-  async function syncParkedSizes(): Promise<void> {
-    const slot = contentSlot(await listPanes(tmux));
-    const size = (
-      await tmux.run(['display-message', '-p', '-t', slot.id, '#{pane_width}x#{pane_height}'])
-    ).trim();
+  async function syncParkedSizes(panes?: PaneInfo[]): Promise<void> {
+    const slot = contentSlot(panes ?? (await listPanes(tmux)));
+    const width = String(slot.width);
+    const height = String(slot.height);
+    const size = `${width}x${height}`;
 
     if (size === syncedSize) return;
-
-    const [width = '', height = ''] = size.split('x');
 
     await tmux.run(['set-option', '-g', 'default-size', size]);
 

@@ -15,7 +15,16 @@ test('parsePane reads a tagged pane and one with no tags', () => {
     workspace: '/w',
     startedAt: 1700,
     pid: 0,
+    active: false,
+    width: 0,
+    height: 0,
   });
+  assert.deepEqual(
+    (({ active, width, height }) => ({ active, width, height }))(
+      parsePane('%3\tsheavly\t0\t\tchat\tabc\t/w\t1700\t5\tp\t1\t120\t40'),
+    ),
+    { active: true, width: 120, height: 40 },
+  );
   assert.equal(parsePane('%3\tsheavly\t0\t\tchat\tabc\t/w\t1700\t0\tprof-1').profile, 'prof-1');
   assert.equal(parsePane('%9\tother\t0\t\t\t\t\t').role, '');
   assert.equal(parsePane('%9\tsheavly\t1\t\tchat\t\t\t').deadStatus, -1);

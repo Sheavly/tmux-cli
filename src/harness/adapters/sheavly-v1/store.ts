@@ -79,20 +79,58 @@ async function readProfileName(file: string, id: string): Promise<string> {
 export async function listChats(params: { sheavlyHome: string }): Promise<ChatListing> {
   const listing: ChatListing = { chats: [], problems: [] };
   const profilesDir = path.join(params.sheavlyHome, 'profiles');
+  const profiles = await readDirNames(profilesDir);
+  // Each level is read in parallel; Promise.all keeps the order of the folders.
+  const perProfile = await Promise.all(
+    profiles.map(async (profile) => {
+      const workspacesDir = path.join(profilesDir, profile, 'workspaces');
+      const perWorkspace = await Promise.all(
+        (await readDirNames(workspacesDir)).map(async (workspace) => {
+          const conversationsDir = path.join(workspacesDir, workspace, 'conversations');
 
-  for (const profile of await readDirNames(profilesDir)) {
-    const workspacesDir = path.join(profilesDir, profile, 'workspaces');
+          return Promise.all(
+            (await readDirNames(conversationsDir)).map((id) =>
+              readChat({ dir: path.join(conversationsDir, id), id, profile }),
+            ),
+          );
+        }),
+      );
 
-    for (const workspace of await readDirNames(workspacesDir)) {
-      const conversationsDir = path.join(workspacesDir, workspace, 'conversations');
+      return perWorkspace.flat();
+    }),
+  );
+  const seen = new Set<string>();
 
-      for (const id of await readDirNames(conversationsDir)) {
-        await addChat({ listing, dir: path.join(conversationsDir, id), id, profile });
-      }
-    }
+  for (const outcome of perProfile.flat()) {
+    seen.add(outcome.file);
+
+    if (outcome.chat) listing.chats.push(outcome.chat);
+
+    if (outcome.problem) listing.problems.push(outcome.problem);
   }
 
+  forgetChatsOutside({ prefix: profilesDir + path.sep, keep: seen });
+
   return listing;
+}
+
+type ReadOutcome = { file: string; chat?: StoredConversation; problem?: string };
+
+/**
+ * Parsed `index.json` files by path, with the modification time and size they were read at. The
+ * sidebar lists every few seconds and almost nothing changes between two listings, so a file whose
+ * stat is unchanged is not read and parsed again. Only valid chats are kept.
+ */
+const parsedIndexes = new Map<
+  string,
+  { mtimeMs: number; size: number; chat: StoredConversation }
+>();
+
+/** Drops cached files under `prefix` that the last listing did not find (deleted chats). */
+function forgetChatsOutside(params: { prefix: string; keep: Set<string> }): void {
+  for (const file of parsedIndexes.keys()) {
+    if (file.startsWith(params.prefix) && !params.keep.has(file)) parsedIndexes.delete(file);
+  }
 }
 
 /** A missing folder is an empty one (nothing stored yet); any other failure is a real error. */
@@ -108,20 +146,27 @@ async function readDirNames(dir: string): Promise<string[]> {
   }
 }
 
-async function addChat(params: {
-  listing: ChatListing;
+async function readChat(params: {
   dir: string;
   id: string;
   profile: string;
-}): Promise<void> {
-  const { listing, dir, id, profile } = params;
+}): Promise<ReadOutcome> {
+  const { dir, id, profile } = params;
   const file = path.join(dir, 'index.json');
 
   try {
+    const { mtimeMs, size } = await stat(file);
+    const cached = parsedIndexes.get(file);
+
+    if (cached?.mtimeMs === mtimeMs && cached.size === size) return { file, chat: cached.chat };
+
     const chat = parseIndex({ text: await readFile(file, 'utf8'), dir, id, profile });
 
-    if (typeof chat === 'string') listing.problems.push(`${file}: ${chat}`);
-    else listing.chats.push(chat);
+    if (typeof chat === 'string') return { file, problem: `${file}: ${chat}` };
+
+    parsedIndexes.set(file, { mtimeMs, size, chat });
+
+    return { file, chat };
   } catch (caughtError) {
     // A folder with neither an index nor a history is not a conversation: what is left when a chat
     // is deleted while its process is still running and writes one last stream event, or a chat
@@ -131,10 +176,10 @@ async function addChat(params: {
       (caughtError as NodeJS.ErrnoException).code === 'ENOENT' &&
       !(await exists(path.join(dir, 'history.jsonl')))
     ) {
-      return;
+      return { file };
     }
 
-    listing.problems.push(`${file}: ${(caughtError as Error).message}`);
+    return { file, problem: `${file}: ${(caughtError as Error).message}` };
   }
 }
 

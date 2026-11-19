@@ -26,6 +26,11 @@ export type PaneInfo = {
   startedAt: number;
   /** The pane's process, 0 when it has ended. */
   pid: number;
+  /** Whether it is the active pane of its window: the one with the keyboard in the main window. */
+  active: boolean;
+  /** The pane's size in columns and rows. */
+  width: number;
+  height: number;
 };
 
 const FIELDS = [
@@ -39,6 +44,9 @@ const FIELDS = [
   '#{@sheavly_started}',
   '#{pane_pid}',
   '#{@sheavly_profile}',
+  '#{pane_active}',
+  '#{pane_width}',
+  '#{pane_height}',
 ];
 
 const ROLES: readonly string[] = ['sidebar', 'chat', 'placeholder', 'anchor'];
@@ -66,6 +74,9 @@ export function parsePane(line: string): PaneInfo {
     started = '',
     pid = '',
     profile = '',
+    active = '',
+    width = '',
+    height = '',
   ] = line.split('\t');
 
   if (!id.startsWith('%')) throw new Error(`Unexpected tmux pane line: ${line}`);
@@ -81,6 +92,9 @@ export function parsePane(line: string): PaneInfo {
     workspace,
     startedAt: Number(started) || 0,
     pid: dead === '1' ? 0 : Number(pid) || 0,
+    active: active === '1',
+    width: Number(width) || 0,
+    height: Number(height) || 0,
   };
 }
 

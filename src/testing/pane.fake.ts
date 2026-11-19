@@ -13,6 +13,9 @@ export function fakePane(over: Partial<PaneInfo> = {}): PaneInfo {
     workspace: '/w',
     startedAt: 1,
     pid: 1,
+    active: false,
+    width: 80,
+    height: 24,
     ...over,
   };
 }
