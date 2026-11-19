@@ -65,6 +65,12 @@ export const footerHints = {
       [['text.submit'], 'open'],
       [['text.cancel'], params.typed ? 'clear' : 'back'],
     ]),
+  /** What can be done while typing a path to go to in the browser. */
+  browserPath: (bindings: Bindings): string =>
+    hints(bindings, [
+      [['text.submit'], 'go'],
+      [['text.cancel'], 'cancel'],
+    ]),
   profiles: (bindings: Bindings): string =>
     hints(bindings, [
       [['navigation.open'], 'switch'],
@@ -176,6 +182,7 @@ export function browserHelp(bindings: Bindings): string[] {
     ...some([
       'browser.parent',
       'browser.filter',
+      'browser.goToPath',
       'browser.newHere',
       'browser.home',
       'browser.hidden',

@@ -70,6 +70,7 @@ character is always typed, so a letter bound to a motion only works on the other
 | `browser.into`                                                              | `Right` `l`                        | go into the folder                                          |
 | `browser.cancel`                                                            | `Escape` `q`                       | cancel                                                      |
 | `browser.filter`                                                            | `s`                                | filter the folders: Enter opens, Esc clears, then goes back |
+| `browser.goToPath`                                                          | `p`                                | go to a typed path: `~`, absolute, or from the folder shown |
 | `browser.home`                                                              | `~`                                | home folder                                                 |
 | `browser.hidden`                                                            | `.`                                | show hidden folders                                         |
 | `browser.newHere`                                                           | `o` `Space`                        | new chat here                                               |

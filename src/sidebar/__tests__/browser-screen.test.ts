@@ -12,6 +12,7 @@ const browser = (over: Partial<Browser>): Browser => ({
   showHidden: false,
   query: '',
   filtering: false,
+  typedPath: undefined,
   ...over,
 });
 

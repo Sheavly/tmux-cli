@@ -219,6 +219,36 @@ test('s in the folder browser filters the folders as the file list does', option
   await gone(pane, 'beta');
 });
 
+test('p in the folder browser goes to a typed path', options, async () => {
+  await writeConfig({});
+
+  const pane = await start('sidebar-path', ['sidebar']);
+
+  await shows(pane, '? help');
+  await type(pane, 'N');
+  await shows(pane, 'alpha/');
+
+  // A path that is not there stays on the line to be fixed, and Escape drops it.
+  await type(pane, 'p');
+  await shows(pane, '⏎ go');
+  await type(pane, '/nonexistent/x');
+  await shows(pane, 'path: /nonexistent/x_');
+  await press(pane, 'Enter');
+  await quiet();
+  assert.match(await plain(pane), /path: \/nonexistent\/x_/);
+  await press(pane, 'Escape');
+  await gone(pane, '⏎ go');
+  await shows(pane, 'alpha/');
+
+  // `~` is the home folder, and Enter goes there.
+  await type(pane, 'p');
+  await type(pane, '~/beta');
+  await press(pane, 'Enter');
+  await gone(pane, '⏎ go');
+  await gone(pane, 'alpha/');
+  await shows(pane, 'beta');
+});
+
 test('the viewer answers to rebound keys and not to the old ones', options, async () => {
   await writeConfig({ viewer: { close: 'x', scrollDown: 's' } });
 

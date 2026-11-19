@@ -26,6 +26,8 @@ export type Browser = {
   query: string;
   /** Whether letters are typed into `query` (they are commands otherwise). */
   filtering: boolean;
+  /** A path being typed to go to; nothing when not asking for one. */
+  typedPath: string | undefined;
 };
 
 /** The files one chat has changed, in place of the chat list. */

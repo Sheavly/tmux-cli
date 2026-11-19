@@ -55,6 +55,17 @@ export function footer(ctx: SidebarContext): string[] {
     return [truncateLine(first, width), footerHints.files(bindings, { typed: mode.query !== '' })];
   }
 
+  if (mode.kind === 'browse' && mode.typedPath !== undefined) {
+    // The first line is for why a path could not be opened; what is typed keeps its end in view.
+    const typed = takeLastColumns(`path: ${mode.typedPath}_`, width);
+
+    return [
+      truncateLine(state.message, width),
+      truncateLine(typed, width),
+      footerHints.browserPath(bindings),
+    ];
+  }
+
   if (mode.kind === 'browse' && mode.filtering) {
     const typed = mode.query === '' ? '' : takeLastColumns(`/ ${mode.query}_`, width);
 

@@ -57,6 +57,7 @@
       "into": ["Right", "l"],
       "cancel": ["Escape", "q"],
       "filter": "s",
+      "goToPath": "p",
       "home": "~",
       "hidden": ".",
       "newHere": ["o", "Space"]

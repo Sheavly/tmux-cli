@@ -13,6 +13,7 @@ import { actionFor, emit, pageSize, switchTo } from './screen.ts';
 import { showHelp } from './help-screen.ts';
 import type { Browser, SidebarContext } from './sidebar.types.ts';
 import { editedQuery } from './text-input.utils.ts';
+import { resolveTypedPath } from './typed-path.utils.ts';
 
 /** The folders that match what was typed, best match first; with nothing typed, all of them. */
 function matchingDirs(browser: Browser): string[] {
@@ -73,6 +74,7 @@ export async function browse(
     showHidden,
     query: '',
     filtering: false,
+    typedPath: undefined,
   };
   const index = select === undefined ? -1 : browserItems(next).indexOf(`${select}/`);
 
@@ -158,7 +160,37 @@ const BROWSER_ACTIONS: Partial<Record<ActionId, BrowserAction>> = {
   'browser.filter': (_ctx, browser) => {
     browser.filtering = true;
   },
+  'browser.goToPath': (_ctx, browser) => {
+    browser.typedPath = '';
+  },
 };
+
+/**
+ * While a path is typed, letters are text and Enter goes there. A path that can't be opened says
+ * why and stays on the line to be fixed; Escape drops it. The arrows do nothing here.
+ */
+async function handleTypedPath(
+  ctx: SidebarContext,
+  key: Key,
+  browser: Browser,
+  typed: string,
+): Promise<void> {
+  const action = actionFor(ctx, 'files', key);
+
+  if (moveFor({ action, page: pageSize() }) !== undefined) return;
+
+  if (action === 'text.cancel') {
+    browser.typedPath = undefined;
+  } else if (action === 'text.submit') {
+    if (typed.trim() === '') return;
+
+    const dir = resolveTypedPath({ dir: browser.dir, typed, home: os.homedir() });
+
+    await browse(ctx, { dir, showHidden: browser.showHidden });
+  } else {
+    browser.typedPath = editedQuery(typed, action, key) ?? typed;
+  }
+}
 
 /** Typing narrows the folders; the cursor goes back to the best match. */
 function filter(browser: Browser, query: string): void {
@@ -195,6 +227,12 @@ async function handleFilter(ctx: SidebarContext, key: Key, browser: Browser): Pr
 }
 
 export async function handleBrowse(ctx: SidebarContext, key: Key, browser: Browser): Promise<void> {
+  if (browser.typedPath !== undefined) {
+    await handleTypedPath(ctx, key, browser, browser.typedPath);
+
+    return;
+  }
+
   if (browser.filtering) {
     await handleFilter(ctx, key, browser);
 

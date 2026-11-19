@@ -213,6 +213,7 @@ export const ACTIONS = [
   },
   { id: 'browser.cancel', keys: ['Escape', 'q'], modes: ['browser'], description: 'cancel' },
   { id: 'browser.filter', keys: ['s'], modes: ['browser'], description: 'filter the folders' },
+  { id: 'browser.goToPath', keys: ['p'], modes: ['browser'], description: 'go to a path' },
   { id: 'browser.home', keys: ['~'], modes: ['browser'], description: 'home folder' },
   { id: 'browser.hidden', keys: ['.'], modes: ['browser'], description: 'show hidden folders' },
   {

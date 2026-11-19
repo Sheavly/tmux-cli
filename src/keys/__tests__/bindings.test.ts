@@ -68,6 +68,7 @@ test('the folder browser keeps the keys it had', () => {
     l: 'browser.into',
     '?': 'navigation.help',
     s: 'browser.filter',
+    p: 'browser.goToPath',
     '~': 'browser.home',
     '.': 'browser.hidden',
     o: 'browser.newHere',
