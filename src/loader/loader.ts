@@ -1,3 +1,4 @@
+import { LOADING_OPTION, MAIN_SESSION } from '../session/panes.ts';
 import type { Tmux } from '../tmux/tmux.ts';
 
 const FRAMES = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
@@ -6,49 +7,75 @@ const FRAME_MS = 100;
 const GIVE_UP_MS = 120_000;
 
 /**
- * Draws a spinner in the middle of the pane it runs in, until the program started beside it has
- * written something. Runs in the background of the pane's shell command, so the chat itself is
- * untouched: the spinner is drawn with the cursor saved and restored, and "something was written"
- * means the pane shows anything but what it showed when the loader began (not counting the
- * spinner's own row).
+ * Shows a spinner in the status line until the program started in `pane` has written something.
+ * Runs in the background of the pane's shell command, so the chat itself is untouched. The spinner
+ * is a tmux option the status line prints, and never text in the pane: a chat that replays a long
+ * history scrolls the screen, and text written there would scroll into the history and stay.
+ * "Something was written" means the pane shows anything but what it showed when the loader began.
+ * The spinner is only up while the pane is the one on screen.
  */
 export async function runLoader(params: { tmux: Tmux; pane: string }): Promise<void> {
   const { tmux, pane } = params;
   const parent = process.ppid;
   const started = Date.now();
-  const out = (text: string) => process.stdout.write(text);
-
-  /** The screen as rows, with the spinner's row left out so it never counts as a change. */
-  async function snapshot(spinnerRow: number): Promise<string> {
-    const text = await tmux.run(['capture-pane', '-p', '-t', pane]);
-
-    return text
-      .split('\n')
-      .map((line, index) => (index === spinnerRow ? '' : line.trimEnd()))
-      .join('\n');
-  }
-
-  const rowOf = () => Math.max(0, Math.floor((process.stdout.rows || 24) / 2));
-  const row = rowOf();
-  const baseline = await snapshot(row);
+  const clients = (await tmux.run(['list-clients', '-F', '#{client_name}']))
+    .split('\n')
+    .filter((name) => name !== '');
+  const baseline = await snapshot(tmux, pane);
+  let shown = false;
   let frame = 0;
 
-  while (process.ppid === parent && Date.now() - started < GIVE_UP_MS) {
-    const columns = process.stdout.columns || 80;
-    const text = `${FRAMES[frame++ % FRAMES.length]} ${LABEL}`;
-    const column = Math.max(1, Math.floor((columns - text.length) / 2) + 1);
+  /** The status line only redraws on its interval, or when a client is told to. */
+  async function setStatus(text: string): Promise<void> {
+    await tmux.run(['set-option', '-g', LOADING_OPTION, text]);
 
-    // Checked before drawing, so a chat that already wrote never gets the spinner over it.
-    if ((await snapshot(row)) !== baseline) break;
-
-    out(`\x1b7\x1b[${row + 1};${column}H${text}\x1b8`);
-    await new Promise((resolve) => setTimeout(resolve, FRAME_MS));
+    for (const client of clients) {
+      await tmux.run(['refresh-client', '-S', '-t', client]).catch(() => undefined);
+    }
   }
 
-  // On the normal screen the spinner is wiped; on the alternate one the chat has taken over.
-  const alternate = (
-    await tmux.run(['display-message', '-p', '-t', pane, '#{alternate_on}'])
-  ).trim();
+  async function clearStatus(): Promise<void> {
+    if (!shown) return;
 
-  if (alternate !== '1') out(`\x1b7\x1b[${row + 1};1H\x1b[2K\x1b8`);
+    shown = false;
+    await setStatus('');
+  }
+
+  // A pane that is closed takes the loader with it; the status must not keep the spinner.
+  for (const signal of ['SIGHUP', 'SIGTERM'] as const) {
+    process.once(signal, () => void clearStatus().finally(() => process.exit(0)));
+  }
+
+  try {
+    while (process.ppid === parent && Date.now() - started < GIVE_UP_MS) {
+      if ((await snapshot(tmux, pane)) !== baseline) break;
+
+      if (await isOnScreen(tmux, pane)) {
+        shown = true;
+        await setStatus(` ${FRAMES[frame++ % FRAMES.length]} ${LABEL} `);
+      } else {
+        await clearStatus();
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, FRAME_MS));
+    }
+  } finally {
+    await clearStatus();
+  }
+}
+
+async function snapshot(tmux: Tmux, pane: string): Promise<string> {
+  const text = await tmux.run(['capture-pane', '-p', '-t', pane]);
+
+  return text
+    .split('\n')
+    .map((line) => line.trimEnd())
+    .join('\n');
+}
+
+/** A chat opened and then left for another is parked: its loader has nothing to show. */
+async function isOnScreen(tmux: Tmux, pane: string): Promise<boolean> {
+  const session = await tmux.run(['display-message', '-p', '-t', pane, '#{session_name}']);
+
+  return session.trim() === MAIN_SESSION;
 }

@@ -1,6 +1,6 @@
 import type { TerminalLook } from '../terminal/terminal.types.ts';
 import type { Tmux } from '../tmux/tmux.ts';
-import { DIVIDER_OPTION } from './panes.ts';
+import { DIVIDER_OPTION, LOADING_OPTION } from './panes.ts';
 
 type Option = [flag: string, name: string, value: string];
 
@@ -29,7 +29,8 @@ export async function applyServerOptions(params: {
     ['-g', 'allow-passthrough', 'on'],
     ['-g', 'status-style', 'bg=colour236,fg=colour250'],
     ['-g', 'status-left', ' sheavly '],
-    ['-g', 'status-right', ''],
+    ['-g', LOADING_OPTION, ''],
+    ['-g', 'status-right', `#{${LOADING_OPTION}}`],
     ...dividerOptions(look.background),
     ['-s', 'escape-time', String(escapeTime)],
     ['-s', 'extended-keys', 'on'],

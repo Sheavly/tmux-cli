@@ -5,6 +5,8 @@ export const MAIN_SESSION = 'sheavly';
 export const PARKING_SESSION = 'sheavly-parked';
 /** A tmux option saying who draws the divider line: `own` (the sidebar) or `tmux`. */
 export const DIVIDER_OPTION = '@sheavly_divider';
+/** A tmux option the status line prints: the loader's spinner while a chat starts, else empty. */
+export const LOADING_OPTION = '@sheavly_loading';
 /** The chat pane that the Alt+g popup shows, written by the key binding just before it opens. */
 export const LINES_PANE_OPTION = '@sheavly_lines_pane';
 
