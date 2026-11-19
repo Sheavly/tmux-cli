@@ -29,6 +29,7 @@ test('the sidebar list keeps the keys it had', () => {
     p: 'list.profiles',
     P: 'list.nextProfile',
     '?': 'navigation.help',
+    s: 'list.search',
     f: 'list.files',
     R: 'list.rename',
     a: 'list.showAll',

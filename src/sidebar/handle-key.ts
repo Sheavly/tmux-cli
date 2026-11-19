@@ -2,9 +2,10 @@ import { handleBrowse } from './browser-screen.ts';
 import { handleFiles } from './files-screen.ts';
 import { handleHelp } from './help-screen.ts';
 import type { Key } from './keys.ts';
-import { handleList } from './list-screen.ts';
+import { handleList, rows } from './list-screen.ts';
 import { handleProfiles } from './profiles-screen.ts';
 import { handleConfirmDelete, handleConfirmQuit, handleRename } from './prompts.ts';
+import { handleSearch } from './search-screen.ts';
 import type { SidebarContext } from './sidebar.types.ts';
 
 /** Hands the key to the screen that is showing. */
@@ -29,6 +30,9 @@ async function dispatch(ctx: SidebarContext, key: Key): Promise<void> {
       break;
     case 'rename':
       await handleRename(ctx, key, mode);
+      break;
+    case 'search':
+      handleSearch(ctx, key, rows(ctx));
       break;
     case 'confirm-quit':
       await handleConfirmQuit(ctx, key);

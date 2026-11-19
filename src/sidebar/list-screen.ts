@@ -18,11 +18,12 @@ import {
 import { askDelete, startRename } from './prompts.ts';
 import { renderScreen } from './render.ts';
 import { actionFor, clearScreen, emit, pageSize, say } from './screen.ts';
+import { startSearch } from './search-screen.ts';
 import type { SidebarContext } from './sidebar.types.ts';
 import { buildRows, type Row } from './view.ts';
 
 /** The rows of the list: the chats of the profile shown, under a name the user gave or their label. */
-function rows(ctx: SidebarContext): Row[] {
+export function rows(ctx: SidebarContext): Row[] {
   const { state } = ctx;
 
   return buildRows({
@@ -180,6 +181,9 @@ const LIST_ACTIONS: Partial<Record<ActionId, ListAction>> = {
   'list.nextProfile': (ctx) => cycleProfile(ctx),
   'navigation.help': (ctx) => {
     showHelp(ctx);
+  },
+  'list.search': (ctx) => {
+    startSearch(ctx);
   },
   'list.files': (ctx, row) => openFiles(ctx, row),
   'list.rename': (ctx, row) => {

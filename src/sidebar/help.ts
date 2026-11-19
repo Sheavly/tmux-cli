@@ -47,6 +47,12 @@ export const footerHints = {
       [['text.submit'], 'save'],
       [['text.cancel'], 'cancel'],
     ]),
+  /** What can be done while typing a chat's name to find it in the list. */
+  search: (bindings: Bindings): string =>
+    hints(bindings, [
+      [['text.submit'], 'select'],
+      [['text.cancel'], 'cancel'],
+    ]),
   /** What can be done in the file search: the Escape clears what was typed, and then goes back. */
   files: (bindings: Bindings, params: { typed: boolean }): string =>
     hints(bindings, [
@@ -118,7 +124,7 @@ export function listHelp(options: HelpOptions): string[] {
       'list.browseFolder',
     ]),
     ...(options.profiles ? some(['list.profiles', 'list.nextProfile']) : []),
-    ...some(['list.rename', 'list.stop']),
+    ...some(['list.search', 'list.rename', 'list.stop']),
     ...(options.deleting ? some(['list.delete']) : []),
     ...some(['list.showAll', 'list.redraw', 'list.detach', 'list.quitAll']),
     ...(options.files ? some(['list.files']) : []),

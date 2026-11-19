@@ -11,6 +11,7 @@ export const MODE_NAMES = {
   profiles: 'profiles',
   files: 'files',
   rename: 'rename',
+  search: 'search',
   help: 'help',
   'confirm-delete': 'confirmDelete',
   'confirm-quit': 'confirmQuit',

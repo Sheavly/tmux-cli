@@ -20,6 +20,12 @@ export function footer(ctx: SidebarContext): string[] {
     );
   }
 
+  if (mode.kind === 'search') {
+    const typed = takeLastColumns(`/ ${mode.query}_`, width);
+
+    return [truncateLine(typed, width), footerHints.search(bindings)];
+  }
+
   if (mode.kind === 'help') {
     return [
       '',

@@ -60,6 +60,8 @@ export type Mode =
   | ProfilesView
   | FilesView
   | { kind: 'rename'; chatId: string; text: string }
+  /** Typing a chat's name to put the cursor on it; `origin` is the cursor key to go back to. */
+  | { kind: 'search'; query: string; origin: string }
   | HelpView
   /** Waiting for Enter to delete this chat; any other key cancels. */
   | { kind: 'confirm-delete'; row: ChatRow }

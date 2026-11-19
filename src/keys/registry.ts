@@ -16,6 +16,7 @@ export type Mode =
   | 'profiles'
   | 'files'
   | 'rename'
+  | 'search'
   | 'help'
   | 'confirmDelete'
   | 'confirmQuit'
@@ -181,6 +182,7 @@ export const ACTIONS = [
   },
   { id: 'list.profiles', keys: ['p'], modes: ['list'], description: 'switch profile' },
   { id: 'list.nextProfile', keys: ['P'], modes: ['list'], description: 'next profile' },
+  { id: 'list.search', keys: ['s'], modes: ['list'], description: 'search chats by name' },
   { id: 'list.files', keys: ['f'], modes: ['list'], description: 'files the chat changed' },
   { id: 'list.rename', keys: ['R'], modes: ['list'], description: 'rename chat' },
   { id: 'list.showAll', keys: ['a'], modes: ['list'], description: 'show all chats' },
@@ -237,16 +239,21 @@ export const ACTIONS = [
   {
     id: 'text.erase',
     keys: ['BSpace'],
-    modes: ['files', 'rename'],
+    modes: ['files', 'rename', 'search'],
     description: 'erase a character',
   },
   {
     id: 'text.cancel',
     keys: ['Escape'],
-    modes: ['files', 'rename'],
+    modes: ['files', 'rename', 'search'],
     description: 'clear, then go back',
   },
-  { id: 'text.submit', keys: ['Enter'], modes: ['files', 'rename'], description: 'accept' },
+  {
+    id: 'text.submit',
+    keys: ['Enter'],
+    modes: ['files', 'rename', 'search'],
+    description: 'accept',
+  },
 
   // the help screen
   { id: 'help.scrollUp', keys: ['Up'], modes: ['help'], description: 'scroll up' },
@@ -309,4 +316,4 @@ export const grammarOf = (context: string): Grammar =>
   TMUX_CONTEXTS.has(context) ? 'tmux' : 'terminal';
 
 /** Where a mode's keys are not commands when they are plain characters: they are typed. */
-export const TEXT_MODES: ReadonlySet<Mode> = new Set(['files', 'rename']);
+export const TEXT_MODES: ReadonlySet<Mode> = new Set(['files', 'rename', 'search']);
