@@ -102,6 +102,7 @@ export function createSession(params: {
     const hasMain = await tmuxSucceeds(tmux, ['has-session', '-t', `=${MAIN_SESSION}`]);
     const sidebarId = hasMain ? await restartSidebar() : await createMain(size);
 
+    await restoreContentPane(sidebarId);
     await keepSidebarWidth(sidebarId);
     await syncParkedSizes();
   }
@@ -136,16 +137,33 @@ export function createSession(params: {
         ...['-x', String(size.cols), '-y', String(size.rows), ...sidebarCommand],
       ])
     ).trim();
+
+    await tag(sidebar, 'role', 'sidebar');
+    await addPlaceholder(sidebar);
+
+    return sidebar;
+  }
+
+  /** The placeholder beside the sidebar, for a session that is new or that lost its content pane. */
+  async function addPlaceholder(sidebarId: string): Promise<void> {
     const content = (
       await tmux.run([
-        ...['split-window', '-h', '-d', '-t', sidebar, '-P', '-F', '#{pane_id}', ...PLACEHOLDER],
+        ...['split-window', '-h', '-d', '-t', sidebarId, '-P', '-F', '#{pane_id}', ...PLACEHOLDER],
       ])
     ).trim();
 
-    await tag(sidebar, 'role', 'sidebar');
     await tag(content, 'role', 'placeholder');
+  }
 
-    return sidebar;
+  /** A session whose content pane was closed (tmux's own keys can) gets its placeholder back. */
+  async function restoreContentPane(sidebarId: string): Promise<void> {
+    const panes = await listPanes(tmux);
+    const hasContent = panes.some(
+      (pane) =>
+        pane.session === MAIN_SESSION && (pane.role === 'chat' || pane.role === 'placeholder'),
+    );
+
+    if (!hasContent) await addPlaceholder(sidebarId);
   }
 
   async function keepSidebarWidth(sidebarId: string): Promise<void> {
@@ -160,13 +178,25 @@ export function createSession(params: {
     await tmux.run(resize.split(' '));
   }
 
-  /** The pane on screen beside the sidebar: a chat, or the placeholder. */
+  /**
+   * The pane on screen beside the sidebar: a chat, or the placeholder. Only panes we tagged count:
+   * the server keeps tmux's own keys, so a pane split by hand (or one from the person's own
+   * tmux.conf) has no role and is none of ours to count, move or kill.
+   */
   function contentSlot(panes: PaneInfo[]): PaneInfo {
-    const slots = panes.filter((pane) => pane.session === MAIN_SESSION && pane.role !== 'sidebar');
+    const slots = panes.filter(
+      (pane) =>
+        pane.session === MAIN_SESSION && (pane.role === 'chat' || pane.role === 'placeholder'),
+    );
     const [slot] = slots;
 
     if (!slot || slots.length !== 1) {
-      throw new Error(`Expected one content pane beside the sidebar, found ${slots.length}`);
+      const found = slots.map((pane) => `${pane.id} (${pane.role})`).join(', ') || 'none';
+
+      throw new Error(
+        `Expected one chat or placeholder pane beside the sidebar, found ${slots.length}: ${found}. ` +
+          'Run `sheavly-tmux stop` and start again.',
+      );
     }
 
     return slot;
