@@ -57,6 +57,7 @@ character is always typed, so a letter bound to a motion only works on the other
 | `list.newChat`                                                              | `n`                                | new chat in the folder                            |
 | `list.browseFolder`                                                         | `N`                                | new chat: browse for a folder                     |
 | `list.profiles`                                                             | `p`                                | switch profile                                    |
+| `list.nextProfile`                                                          | `P`                                | next profile, wrapping around                     |
 | `list.files`                                                                | `f`                                | files the chat changed                            |
 | `list.rename`                                                               | `R`                                | rename chat                                       |
 | `list.showAll`                                                              | `a`                                | show all chats                                    |

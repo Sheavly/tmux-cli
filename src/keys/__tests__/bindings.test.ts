@@ -27,6 +27,7 @@ test('the sidebar list keeps the keys it had', () => {
     n: 'list.newChat',
     N: 'list.browseFolder',
     p: 'list.profiles',
+    P: 'list.nextProfile',
     '?': 'navigation.help',
     f: 'list.files',
     R: 'list.rename',

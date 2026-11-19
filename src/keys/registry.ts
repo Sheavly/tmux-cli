@@ -180,6 +180,7 @@ export const ACTIONS = [
     description: 'new chat: browse for a folder',
   },
   { id: 'list.profiles', keys: ['p'], modes: ['list'], description: 'switch profile' },
+  { id: 'list.nextProfile', keys: ['P'], modes: ['list'], description: 'next profile' },
   { id: 'list.files', keys: ['f'], modes: ['list'], description: 'files the chat changed' },
   { id: 'list.rename', keys: ['R'], modes: ['list'], description: 'rename chat' },
   { id: 'list.showAll', keys: ['a'], modes: ['list'], description: 'show all chats' },

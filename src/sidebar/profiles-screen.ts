@@ -96,18 +96,42 @@ export function drawProfiles(ctx: SidebarContext, view: ProfilesView): void {
   emit(ctx, screen.lines);
 }
 
-/** Enter makes the profile under the cursor the one the list shows, and remembers it. */
-async function chooseUnderCursor(ctx: SidebarContext, view: ProfilesView): Promise<void> {
+/** Makes a profile the one the list shows, remembers it and puts the list's cursor at the top. */
+async function showProfile(ctx: SidebarContext, id: string): Promise<void> {
   const { state } = ctx;
-  const profile = state.profiles[view.cursor];
 
-  if (!profile) return;
-
-  state.activeProfile = profile.id;
-  await writeActiveProfile({ file: ctx.stateFile, adapter: ctx.adapter.name, id: profile.id });
+  state.activeProfile = id;
+  await writeActiveProfile({ file: ctx.stateFile, adapter: ctx.adapter.name, id });
   state.cursorKey = '';
   state.cursor = 0;
   state.scrollTop = 0;
+}
+
+/** Shows the profile after the active one, wrapping from the last to the first. */
+export async function cycleProfile(ctx: SidebarContext): Promise<void> {
+  const { state } = ctx;
+
+  if (!ctx.adapter.listProfiles) {
+    state.message = 'This harness has no profiles.';
+
+    return;
+  }
+
+  await settleProfile(ctx);
+
+  const current = state.profiles.findIndex((profile) => profile.id === state.activeProfile);
+  const next = state.profiles[(current + 1) % state.profiles.length];
+
+  if (next) await showProfile(ctx, next.id);
+}
+
+/** Enter makes the profile under the cursor the one the list shows, and remembers it. */
+async function chooseUnderCursor(ctx: SidebarContext, view: ProfilesView): Promise<void> {
+  const profile = ctx.state.profiles[view.cursor];
+
+  if (!profile) return;
+
+  await showProfile(ctx, profile.id);
   switchTo(ctx, { kind: 'list' });
 }
 

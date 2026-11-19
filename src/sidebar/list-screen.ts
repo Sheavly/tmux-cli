@@ -9,7 +9,12 @@ import { showHelp } from './help-screen.ts';
 import type { Key } from './keys.ts';
 import { loadMissingLabels } from './labels.ts';
 import { moveFor } from './navigation.utils.ts';
-import { activeProfileName, onActiveProfile, openProfiles } from './profiles-screen.ts';
+import {
+  activeProfileName,
+  cycleProfile,
+  onActiveProfile,
+  openProfiles,
+} from './profiles-screen.ts';
 import { askDelete, startRename } from './prompts.ts';
 import { renderScreen } from './render.ts';
 import { actionFor, clearScreen, emit, pageSize, say } from './screen.ts';
@@ -172,6 +177,7 @@ const LIST_ACTIONS: Partial<Record<ActionId, ListAction>> = {
   'list.newChat': (ctx, row) => startNew(ctx, row?.workspace),
   'list.browseFolder': (ctx) => browse(ctx, { dir: os.homedir(), showHidden: false }),
   'list.profiles': (ctx) => openProfiles(ctx),
+  'list.nextProfile': (ctx) => cycleProfile(ctx),
   'navigation.help': (ctx) => {
     showHelp(ctx);
   },

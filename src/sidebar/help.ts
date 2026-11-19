@@ -117,7 +117,7 @@ export function listHelp(options: HelpOptions): string[] {
       'list.newChat',
       'list.browseFolder',
     ]),
-    ...(options.profiles ? some(['list.profiles']) : []),
+    ...(options.profiles ? some(['list.profiles', 'list.nextProfile']) : []),
     ...some(['list.rename', 'list.stop']),
     ...(options.deleting ? some(['list.delete']) : []),
     ...some(['list.showAll', 'list.redraw', 'list.detach', 'list.quitAll']),
