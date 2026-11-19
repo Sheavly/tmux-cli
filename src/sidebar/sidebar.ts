@@ -28,6 +28,7 @@ function initialState(): SidebarState {
     message: '',
     mode: { kind: 'list' },
     cursorKey: '',
+    profileCursorKeys: new Map(),
     cursor: 0,
     scrollTop: 0,
     showAll: false,

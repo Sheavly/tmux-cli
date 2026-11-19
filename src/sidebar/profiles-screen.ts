@@ -96,13 +96,17 @@ export function drawProfiles(ctx: SidebarContext, view: ProfilesView): void {
   emit(ctx, screen.lines);
 }
 
-/** Makes a profile the one the list shows, remembers it and puts the list's cursor at the top. */
+/**
+ * Makes a profile the one the list shows and remembers it. The cursor goes back to the row it was
+ * on when that profile was left (selected only, nothing is opened), or the top if it had none.
+ */
 async function showProfile(ctx: SidebarContext, id: string): Promise<void> {
   const { state } = ctx;
 
+  state.profileCursorKeys.set(state.activeProfile, state.cursorKey);
   state.activeProfile = id;
   await writeActiveProfile({ file: ctx.stateFile, adapter: ctx.adapter.name, id });
-  state.cursorKey = '';
+  state.cursorKey = state.profileCursorKeys.get(id) ?? '';
   state.cursor = 0;
   state.scrollTop = 0;
 }

@@ -83,6 +83,8 @@ export type SidebarState = {
   mode: Mode;
   /** The row the cursor is on, by key, so it stays on its row when the list changes. */
   cursorKey: string;
+  /** The `cursorKey` each profile's list had when it was left, by profile id. */
+  profileCursorKeys: Map<string, string>;
   cursor: number;
   scrollTop: number;
   showAll: boolean;
