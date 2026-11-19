@@ -31,6 +31,12 @@ export type Config = {
    * read as Escape and a typed letter, so a higher value is for ssh. Left out, tmux's setting is 10.
    */
   escapeTime: number | undefined;
+  /**
+   * Whether tmux's own keys and mouse menus are switched off in the session (the default). They can
+   * open a window or split a pane beside the sidebar, which the layout does not expect; `false`
+   * leaves tmux as it is, for someone who wants its prefix keys there.
+   */
+  lockTmux: boolean;
   /** The tmux socket name: a server of its own, so no other tmux settings or bindings are touched. */
   socket: string;
 };
@@ -41,6 +47,7 @@ const FILE_KEYS = [
   ...ADAPTER_KEYS,
   'sidebarWidth',
   'escapeTime',
+  'lockTmux',
   'socket',
   'keys',
   'acceptUnboundKeys',
@@ -81,6 +88,7 @@ export function loadConfig(
     ),
     sidebarWidth: file.sidebarWidth ?? 34,
     escapeTime: file.escapeTime,
+    lockTmux: file.lockTmux ?? true,
     socket: file.socket ?? 'sheavly',
   };
 }
@@ -96,6 +104,7 @@ type FileConfig = {
   command?: string;
   sidebarWidth?: number;
   escapeTime?: number;
+  lockTmux?: boolean;
   socket?: string;
   keys?: KeyOverrides;
   acceptUnboundKeys?: boolean;
@@ -135,6 +144,7 @@ function parseConfigFile(params: { file: string; text: string }): FileConfig {
     ...numberField({ file, record, key: 'escapeTime', min: 0, max: 500 }),
     ...(record.keys === undefined ? {} : { keys: parseKeyOverrides({ file, value: record.keys }) }),
     ...booleanField({ file, record, key: 'acceptUnboundKeys' }),
+    ...booleanField({ file, record, key: 'lockTmux' }),
   };
 }
 

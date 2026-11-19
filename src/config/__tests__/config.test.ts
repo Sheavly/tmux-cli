@@ -67,6 +67,15 @@ test('escapeTime is a whole number of milliseconds from 0 to 500, and is left to
   assert.throws(() => load('{"sidebarWidth":10}'), /from 16 to 120/);
 });
 
+test('tmux’s own keys are locked in the session unless the file says lockTmux is false', () => {
+  const load = (text: string) => loadConfig({ env: {}, home: '/h', readFile: () => text });
+
+  assert.equal(loadConfig({ env: {}, home: '/h', readFile: missing }).lockTmux, true);
+  assert.equal(load('{"lockTmux":true}').lockTmux, true);
+  assert.equal(load('{"lockTmux":false}').lockTmux, false);
+  assert.throws(() => load('{"lockTmux":"no"}'), /"lockTmux" must be true or false/);
+});
+
 test('without a keys section the keys are the defaults and nothing needs accepting', () => {
   const config = loadConfig({ env: {}, home: '/h', readFile: missing });
 

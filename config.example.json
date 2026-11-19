@@ -2,6 +2,7 @@
   "adapter": "sheavly-v1",
   "sidebarWidth": 34,
   "escapeTime": 10,
+  "lockTmux": true,
   "socket": "sheavly",
   "acceptUnboundKeys": false,
   "keys": {

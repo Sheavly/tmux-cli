@@ -48,7 +48,9 @@ waits for the second part; 50 to 100 is usual for ssh.
 
 The mouse is on in our tmux, so clicking a pane focuses it and the wheel scrolls. While it is on, the
 terminal's own text selection needs a modifier held: Shift in most terminals on Linux and Windows,
-and Option in some on macOS.
+and Option in some on macOS. tmux's right-click menus (split, new window, kill) are switched off
+with the rest of its own keys (`lockTmux` in the README's Settings), since they change the layout
+the sidebar expects.
 
 ## Copy mode keys
 

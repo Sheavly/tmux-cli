@@ -112,6 +112,7 @@ chat's profile from the folder it is stored in.
   "mode": "built",
   "sidebarWidth": 34,
   "escapeTime": 10,
+  "lockTmux": true,
   "socket": "sheavly"
 }
 ```
@@ -134,6 +135,15 @@ command of your own.
 `escapeTime` is how long tmux waits (milliseconds, 0 to 500) after an `Esc` for the rest of a key. An
 Alt key reaches it as `Esc` and the key, so over a slow ssh connection a higher value (50 to 100)
 keeps `Alt+h` from being read as `Esc` and a typed `h`.
+
+`lockTmux` (on by default) switches tmux's own keys off inside the session. The session is the
+sidebar and one pane beside it, and tmux's defaults can break that: `C-b c` opens a window, `C-b %`
+splits a pane, a right click offers the same in a menu. With it on, tmux's prefix key does nothing
+(so `C-b` goes to the chat like any other key) and the mouse menus that change the layout are
+gone; our keys, the wheel and dragging the sidebar's border still work. Leave the session with
+the sidebar's detach key (`q`) instead of `C-b d`. Set it to `false` to have tmux's prefix back
+(your own prefix, if you set one, is restored); the mouse menus come back after `sheavly-tmux
+stop` and a start.
 
 `SHEAVLY_HOME` and `SHEAVLY_HARNESS_DIR` override the data and harness folders.
 

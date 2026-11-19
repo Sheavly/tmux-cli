@@ -4,9 +4,18 @@ import { defaultBindings, type Bindings } from '../keys/bindings.ts';
 import type { TerminalLook } from '../terminal/terminal.types.ts';
 import { shellQuote, tmuxSucceeds, type Tmux } from '../tmux/tmux.ts';
 import { applyBindings } from './key-bindings.ts';
+import {
+  PLACEHOLDER,
+  createMain,
+  createParking,
+  keepSidebarWidth,
+  restoreContentPane,
+  tagPane,
+} from './layout.ts';
 import { MAIN_SESSION, PARKING_SESSION, listPanes, type PaneInfo, type PaneRole } from './panes.ts';
 import { waitForExit } from './process-exit.ts';
 import { applyServerOptions } from './server-options.ts';
+import { applyTmuxLock } from './tmux-lock.ts';
 
 export type OpenTarget = {
   workspace: string;
@@ -17,13 +26,6 @@ export type OpenTarget = {
 
 export type Session = ReturnType<typeof createSession>;
 
-const IDLE = ['sh', '-c', 'exec tail -f /dev/null'];
-const PLACEHOLDER = [
-  'sh',
-  '-c',
-  "printf '\\n  No chat open.\\n\\n  Pick one in the sidebar and press Enter,\\n  or press n for a new chat.\\n'; exec tail -f /dev/null",
-];
-
 /**
  * One tmux server of its own with two sessions. `sheavly` is what you attach to: a sidebar pane and
  * a content pane. `sheavly-parked` holds every chat that isn't on screen, one window each, so a
@@ -33,7 +35,11 @@ const PLACEHOLDER = [
  */
 export function createSession(params: {
   tmux: Tmux;
-  config: Pick<Config, 'sidebarWidth'> & { escapeTime?: number | undefined };
+  config: Pick<Config, 'sidebarWidth'> & {
+    escapeTime?: number | undefined;
+    /** Switches tmux's own keys off in the session; on unless this says `false`. */
+    lockTmux?: boolean | undefined;
+  };
   /** Says how a chat is started; the session only runs what it is told. */
   adapter: Pick<HarnessAdapter, 'launch'>;
   /** The argv that runs the sidebar. */
@@ -77,21 +83,21 @@ export function createSession(params: {
 
   let syncedSize = '';
 
-  async function tag(paneId: string, option: string, value: string): Promise<void> {
-    await tmux.run(['set-option', '-p', '-t', paneId, `@sheavly_${option}`, value]);
-  }
+  const tag = (paneId: string, option: string, value: string): Promise<void> =>
+    tagPane({ tmux, paneId, option, value });
 
   async function ensure(
     size: { cols: number; rows: number },
     look: TerminalLook = {},
   ): Promise<void> {
     if (!(await tmuxSucceeds(tmux, ['has-session', '-t', `=${PARKING_SESSION}`]))) {
-      await createParking(size);
+      await createParking({ tmux, size });
     }
 
     syncedSize = '';
     // Every start, so a running server picks up options and bindings added since it began.
     await applyServerOptions({ tmux, look, escapeTime: config.escapeTime });
+    await applyTmuxLock({ tmux, locked: config.lockTmux ?? true });
     await applyBindings({
       tmux,
       bindings,
@@ -100,10 +106,12 @@ export function createSession(params: {
     });
 
     const hasMain = await tmuxSucceeds(tmux, ['has-session', '-t', `=${MAIN_SESSION}`]);
-    const sidebarId = hasMain ? await restartSidebar() : await createMain(size);
+    const sidebarId = hasMain
+      ? await restartSidebar()
+      : await createMain({ tmux, size, sidebarCommand });
 
-    await restoreContentPane(sidebarId);
-    await keepSidebarWidth(sidebarId);
+    await restoreContentPane({ tmux, sidebarId });
+    await keepSidebarWidth({ tmux, sidebarId, width: config.sidebarWidth });
     await syncParkedSizes();
   }
 
@@ -119,63 +127,6 @@ export function createSession(params: {
     await tmux.run(['respawn-pane', '-k', '-t', sidebar.id, ...sidebarCommand]);
 
     return sidebar.id;
-  }
-
-  async function createParking(size: { cols: number; rows: number }): Promise<void> {
-    const anchor = await tmux.run([
-      ...['new-session', '-d', '-P', '-F', '#{pane_id}', '-s', PARKING_SESSION],
-      ...['-n', 'anchor', '-x', String(size.cols), '-y', String(size.rows), ...IDLE],
-    ]);
-
-    await tag(anchor.trim(), 'role', 'anchor');
-  }
-
-  async function createMain(size: { cols: number; rows: number }): Promise<string> {
-    const sidebar = (
-      await tmux.run([
-        ...['new-session', '-d', '-P', '-F', '#{pane_id}', '-s', MAIN_SESSION, '-n', 'chats'],
-        ...['-x', String(size.cols), '-y', String(size.rows), ...sidebarCommand],
-      ])
-    ).trim();
-
-    await tag(sidebar, 'role', 'sidebar');
-    await addPlaceholder(sidebar);
-
-    return sidebar;
-  }
-
-  /** The placeholder beside the sidebar, for a session that is new or that lost its content pane. */
-  async function addPlaceholder(sidebarId: string): Promise<void> {
-    const content = (
-      await tmux.run([
-        ...['split-window', '-h', '-d', '-t', sidebarId, '-P', '-F', '#{pane_id}', ...PLACEHOLDER],
-      ])
-    ).trim();
-
-    await tag(content, 'role', 'placeholder');
-  }
-
-  /** A session whose content pane was closed (tmux's own keys can) gets its placeholder back. */
-  async function restoreContentPane(sidebarId: string): Promise<void> {
-    const panes = await listPanes(tmux);
-    const hasContent = panes.some(
-      (pane) =>
-        pane.session === MAIN_SESSION && (pane.role === 'chat' || pane.role === 'placeholder'),
-    );
-
-    if (!hasContent) await addPlaceholder(sidebarId);
-  }
-
-  async function keepSidebarWidth(sidebarId: string): Promise<void> {
-    const resize = `resize-pane -t ${sidebarId} -x ${config.sidebarWidth}`;
-
-    // `window-resized` runs after tmux has rescaled the panes, so the width set here is the last
-    // word; `client-resized` runs before it and was overwritten.
-    for (const hook of ['window-resized', 'client-attached']) {
-      await tmux.run(['set-hook', '-g', hook, resize]);
-    }
-
-    await tmux.run(resize.split(' '));
   }
 
   /**
