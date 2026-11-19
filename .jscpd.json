@@ -1,0 +1,13 @@
+{
+  "path": ["."],
+  "format": ["typescript", "javascript"],
+  "minTokens": 50,
+  "minLines": 5,
+  "mode": "mild",
+  "gitignore": true,
+  "ignore": ["**/node_modules/**", "**/coverage/**"],
+  "reporters": ["console"],
+  "failOnEmpty": true,
+  "threshold": 0,
+  "noTips": true
+}

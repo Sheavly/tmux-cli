@@ -1,0 +1,104 @@
+{
+  "adapter": "sheavly-v1",
+  "sidebarWidth": 34,
+  "escapeTime": 10,
+  "socket": "sheavly",
+  "acceptUnboundKeys": false,
+  "keys": {
+    "global": {
+      "focusSidebar": "M-h",
+      "togglePane": "M-s",
+      "scrollBack": "PageUp",
+      "copyNewest": "M-c",
+      "copyLines": "M-g",
+      "chatEscape": "Escape"
+    },
+    "copyMode": {
+      "selectLeft": "S-Left",
+      "selectRight": "S-Right",
+      "selectUp": "S-Up",
+      "selectDown": "S-Down",
+      "wordPrevious": "C-Left",
+      "wordNext": "C-Right",
+      "selectWordPrevious": "C-S-Left",
+      "selectWordNext": "C-S-Right",
+      "copy": ["Enter", "C-c"],
+      "escape": "Escape",
+      "quit": "q"
+    },
+    "navigation": {
+      "up": ["Up", "k"],
+      "down": ["Down", "j"],
+      "pageUp": "PageUp",
+      "pageDown": "PageDown",
+      "top": "g",
+      "bottom": "G",
+      "open": "Enter",
+      "help": "?"
+    },
+    "list": {
+      "selectActive": ["Left", "Right"],
+      "newChat": "n",
+      "browseFolder": "N",
+      "profiles": "p",
+      "files": "f",
+      "rename": "R",
+      "showAll": "a",
+      "stop": "x",
+      "delete": "Delete",
+      "redraw": "r",
+      "detach": "q",
+      "quitAll": "Q"
+    },
+    "browser": {
+      "parent": ["Left", "h", "BSpace"],
+      "into": ["Right", "l"],
+      "cancel": ["Escape", "q"],
+      "home": "~",
+      "hidden": ".",
+      "newHere": ["o", "Space"]
+    },
+    "profiles": {
+      "close": ["Escape", "q", "p"]
+    },
+    "text": {
+      "erase": "BSpace",
+      "cancel": "Escape",
+      "submit": "Enter"
+    },
+    "help": {
+      "scrollUp": "Up",
+      "scrollDown": "Down",
+      "scrollLeft": "Left",
+      "scrollRight": "Right",
+      "pageUp": "PageUp",
+      "pageDown": "PageDown"
+    },
+    "confirm": {
+      "delete": "Enter",
+      "quit": "Enter"
+    },
+    "popup": {
+      "scrollUp": "Up",
+      "scrollDown": "Down",
+      "pageUp": "PageUp",
+      "pageDown": "PageDown",
+      "jump": "Enter",
+      "erase": "BSpace",
+      "cancel": "Escape"
+    },
+    "viewer": {
+      "close": ["Escape", "q"],
+      "scrollUp": ["Up", "k"],
+      "scrollDown": ["Down", "j"],
+      "pageUp": "PageUp",
+      "pageDown": ["PageDown", "Space"],
+      "top": "g",
+      "bottom": "G",
+      "panLeft": ["Left", "h"],
+      "panRight": ["Right", "l"],
+      "nextChange": "n",
+      "previousChange": "p"
+    }
+  }
+}

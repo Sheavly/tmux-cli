@@ -1,0 +1,54 @@
+{
+  "name": "sheavly-tmux",
+  "version": "0.0.0",
+  "description": "A tmux front end for sheavly: a sidebar of stored chats and the running chat beside it.",
+  "type": "module",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Sheavly/tmux-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Sheavly/tmux-cli/issues"
+  },
+  "homepage": "https://github.com/Sheavly/tmux-cli#readme",
+  "bin": {
+    "sheavly-tmux": "./src/cli.ts"
+  },
+  "scripts": {
+    "start": "node src/cli.ts",
+    "setup": "node scripts/setup.mjs",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix && prettier --write . --log-level warn",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "knip": "knip",
+    "jscpd": "jscpd",
+    "check:docs": "node scripts/check-docs.mjs",
+    "test": "node --test 'src/**/__tests__/*.test.ts' 'lint/__tests__/*.test.js' 'scripts/__tests__/*.test.mjs'",
+    "check": "npm run typecheck && npm run lint && npm run format:check && npm run knip && npm run jscpd && npm run check:docs && npm test"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@stylistic/eslint-plugin": "^5.10.0",
+    "@types/node": "^26.6.6",
+    "eslint": "^10.15.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-sonarjs": "^4.2.2",
+    "eslint-plugin-unicorn": "^79.0.0",
+    "globals": "^17.14.0",
+    "jscpd": "^5.4.3",
+    "knip": "^6.46.1",
+    "prettier": "^3.10.1",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.73.0"
+  },
+  "dependencies": {
+    "shiki": "^4.6.0"
+  }
+}

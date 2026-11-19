@@ -1,0 +1,85 @@
+name: Check
+
+# The quality gate (`npm run check`: typecheck, ESLint, Prettier, knip, jscpd, the docs check and the
+# tests) on every pull request and every push to main, as two parallel jobs: the static checks, which
+# need nothing but Node, report a failure within about a minute, and the tests, which start a real
+# tmux on a socket of their own.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  static:
+    name: Typecheck, lint, format, knip, jscpd, docs
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+
+      # With audit and fund off, `npm ci` is a few seconds on a warm npm cache.
+      - name: Install
+        run: npm ci --no-audit --no-fund
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Format
+        run: npm run format:check
+
+      - name: Dead code
+        run: npm run knip
+
+      - name: Copied code
+        run: npm run jscpd
+
+      - name: Docs
+        run: npm run check:docs
+
+  test:
+    name: Tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm ci --no-audit --no-fund
+
+      # The integration tests drive a real tmux (3.3 or newer; the runner's is 3.4).
+      - name: Install tmux
+        run: sudo apt-get update && sudo apt-get install -y tmux
+
+      # Some tests make throwaway git repositories and commits; give them an identity.
+      - name: Test
+        run: npm test
+        env:
+          GIT_AUTHOR_NAME: ci
+          GIT_AUTHOR_EMAIL: ci@example.invalid
+          GIT_COMMITTER_NAME: ci
+          GIT_COMMITTER_EMAIL: ci@example.invalid

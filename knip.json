@@ -1,0 +1,13 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "src/**/__tests__/*.test.ts",
+    "lint/__tests__/*.test.js",
+    "scripts/*.mjs",
+    "scripts/__tests__/*.test.mjs"
+  ],
+  "project": ["src/**/*.ts", "lint/**/*.js", "scripts/**/*.mjs"],
+  // A type used in its own file's exported signatures (`HarnessAdapter`'s `LaunchSpec`) is part of
+  // that API: an adapter author names it, even if nothing in the repo does.
+  "ignoreExportsUsedInFile": { "type": true }
+}

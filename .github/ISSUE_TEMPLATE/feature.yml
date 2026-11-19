@@ -1,0 +1,21 @@
+name: Feature
+description: Something it should do that it does not.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: 'What you are trying to do and what gets in the way. The problem first; a solution can come after.'
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: An idea for it
+      description: 'How it could work, if you have one: the keys, the screen, the setting.'
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What you do instead
+      description: 'Any way around it today, including changing a key in the config.'

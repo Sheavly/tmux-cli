@@ -1,0 +1,30 @@
+name: Bug
+description: Something does not work the way the README or the docs say.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: 'What you did, what you expected, and what you got instead.'
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: 'The smallest way to make it happen again.'
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: 'Output of `node --version` and `tmux -V`, and your terminal.'
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: Config
+      description: 'Your `~/.config/sheavly-tmux/config.json`, if you have one (leave out anything private). `sheavly-tmux keys` shows the keys in use.'
