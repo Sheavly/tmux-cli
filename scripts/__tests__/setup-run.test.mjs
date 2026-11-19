@@ -353,8 +353,8 @@ test('a profile that exists is found and left alone; without one the harness wiz
   );
   assert.equal(setup.cwd, lacks.defaultDir);
   assert.equal(setup.inherit, true);
-  // From the home folder, so no project gets a conversation of its own for the setup.
-  assert.equal(setup.env.WORKSPACE_ROOT, lacks.home);
+  // The harness refuses the home folder as a workspace, so the wizard works from this repository.
+  assert.equal(setup.env.WORKSPACE_ROOT, lacks.repo);
   assert.ok(wizard.lines.includes('ok profile set up'));
 });
 

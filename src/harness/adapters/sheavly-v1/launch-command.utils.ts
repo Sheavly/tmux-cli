@@ -15,6 +15,17 @@ export const BUILD_COMMAND = ['npm', 'run', 'build', '-w', '@sheavly/terminal'];
 const DEV_COMMAND = ['npm', 'run', '--silent', 'dev', '-w', '@sheavly/terminal', '--'];
 
 /**
+ * What npm sets for the project it runs a script in. The harness reads the first to find its
+ * backend (`npm run --prefix $npm_config_local_prefix -w @sheavly/backend serve`), so when we were
+ * started by npm (`npm run setup`, `npm start`) they name this repository, the backend is not found
+ * there and the chat dies with "The backend exited (1) before it listened". The harness is started
+ * without them, so it works out where it is from its own folder.
+ */
+export const NPM_PROJECT_VARS = ['npm_config_local_prefix', 'INIT_CWD'];
+
+const WITHOUT_NPM_PROJECT = `unset ${NPM_PROJECT_VARS.join(' ')}; `;
+
+/**
  * Said in the pane when the harness is not built, which would otherwise be a bare "Cannot find
  * module". It holds no single quote: it goes into a shell command inside single quotes.
  */
@@ -35,9 +46,9 @@ export function parseLaunchMode(value: string | undefined): LaunchMode {
 
 /** The shell command that starts the chat program, before `--resume` or `--profile` is added. */
 export function defaultCommand(mode: LaunchMode): string {
-  if (mode === 'dev') return `${DEV_COMMAND.join(' ')} --trust`;
+  if (mode === 'dev') return `${WITHOUT_NPM_PROJECT}${DEV_COMMAND.join(' ')} --trust`;
 
-  return `test -f ${BUILT_ENTRY} || { printf '${NOT_BUILT}\\n'; exit 1; }; node ${BUILT_ENTRY} --trust`;
+  return `${WITHOUT_NPM_PROJECT}test -f ${BUILT_ENTRY} || { printf '${NOT_BUILT}\\n'; exit 1; }; node ${BUILT_ENTRY} --trust`;
 }
 
 /**

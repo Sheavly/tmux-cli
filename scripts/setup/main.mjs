@@ -297,7 +297,7 @@ async function writeConfig({ ctx, file, existing, dir, mode }) {
 }
 
 async function profileStep({ ctx, dir, mode }) {
-  const { io, run, env, home, options } = ctx;
+  const { io, run, env, home, repo, options } = ctx;
   const sheavlyHome = sheavlyHomeOf({ env, home });
   const ready = readyProfiles(sheavlyHome);
 
@@ -326,7 +326,7 @@ async function profileStep({ ctx, dir, mode }) {
     return;
   }
 
-  runHarnessSetup({ run, dir, mode, env, home });
+  runHarnessSetup({ run, dir, mode, env, workspace: repo });
 
   if (readyProfiles(sheavlyHome).length > 0) io.ok('profile set up');
   else io.warn(`Still no profile. Try the wizard on its own: ${setupCommandLine({ dir, mode })}`);

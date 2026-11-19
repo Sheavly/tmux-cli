@@ -56,11 +56,18 @@ export function setupCommandLine({ dir, mode }) {
 
 /**
  * Opens the harness's own setup, which takes the models and keys itself: we never see them. It
- * opens a chat when it is done, which the person leaves with `/exit`. It works from the home
- * folder, so no project gets a conversation of its own for this.
+ * opens a chat when it is done, which the person leaves with `/exit`. That chat needs a workspace,
+ * and the harness refuses the home folder as one ("it holds everything the user owns"), so it is
+ * given a folder of ours: this repository.
  */
-export function runHarnessSetup({ run, dir, mode, env, home }) {
+export function runHarnessSetup({ run, dir, mode, env, workspace }) {
   const [command, ...args] = setupArgv(mode);
 
-  return run({ command, args, cwd: dir, env: { ...env, WORKSPACE_ROOT: home }, inherit: true });
+  return run({
+    command,
+    args,
+    cwd: dir,
+    env: { ...env, WORKSPACE_ROOT: workspace },
+    inherit: true,
+  });
 }

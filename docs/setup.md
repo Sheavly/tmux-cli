@@ -31,7 +31,8 @@ which it checks).
 5. **Looks for a profile** (a model and its key, in `~/.sheavly`, or `SHEAVLY_HOME`). If there is
    none it offers to open the harness's own setup wizard. The wizard takes your models and keys
    itself: sheavly-tmux never sees them. It opens a chat when it finishes, which you leave with
-   `/exit`; it runs from your home folder, so no project gets a conversation for it.
+   `/exit`; that chat is in this repository's folder, since the harness does not accept your home
+   folder as a workspace.
 6. **Offers the `sheavly-tmux` command** with `npm link`. If a global link is not allowed on this
    computer (a system Node without sudo) it prints an alias to use instead.
 7. **Checks the result** the way sheavly-tmux will see it: the config it loads, the harness that

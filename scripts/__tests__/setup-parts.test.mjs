@@ -12,7 +12,7 @@ import { createIo } from '../setup/io.mjs';
 import { aliasLine } from '../setup/link.mjs';
 import { checkTools, tmuxInstallHint } from '../setup/preflight.mjs';
 import { readyProfiles } from '../setup/profile.mjs';
-import { runCommand } from '../setup/shell.mjs';
+import { cleanNpmEnv, runCommand } from '../setup/shell.mjs';
 import { tempHome, writeHarness, writeProfile } from './setup.fake.mjs';
 
 const hasGit = spawnSync('git', ['--version']).status === 0;
@@ -284,4 +284,38 @@ test('the runner says how a program went and what it wrote', () => {
 
   assert.equal(missing.status, null);
   assert.equal(missing.error.code, 'ENOENT');
+});
+
+test('a program the setup starts does not inherit what npm sets for this repository, which made the harness look for its backend here', () => {
+  const polluted = {
+    ...process.env,
+    npm_config_local_prefix: '/this/repo',
+    INIT_CWD: '/this/repo',
+    npm_package_name: 'sheavly-tmux',
+    npm_lifecycle_event: 'setup',
+    npm_config_registry: 'https://registry.example.invalid',
+    KEEP_ME: 'yes',
+  };
+  const clean = cleanNpmEnv(polluted);
+
+  // What the person set on purpose stays: a registry, any other variable.
+  assert.equal(clean.npm_config_registry, 'https://registry.example.invalid');
+  assert.equal(clean.KEEP_ME, 'yes');
+  assert.deepEqual(
+    ['npm_config_local_prefix', 'INIT_CWD', 'npm_package_name', 'npm_lifecycle_event'].filter(
+      (name) => name in clean,
+    ),
+    [],
+  );
+
+  const seen = runCommand({
+    command: 'node',
+    args: [
+      '-e',
+      'console.log(JSON.stringify([process.env.npm_config_local_prefix ?? null, process.env.KEEP_ME]))',
+    ],
+    env: polluted,
+  });
+
+  assert.deepEqual(JSON.parse(seen.stdout), [null, 'yes']);
 });

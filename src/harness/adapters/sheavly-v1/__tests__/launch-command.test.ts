@@ -16,7 +16,7 @@ test('the harness is run from its build unless the config asks for the source', 
   assert.throws(() => parseLaunchMode('prod'), /"mode" must be "built" or "dev", not "prod"/);
 
   assert.match(defaultCommand('built'), /node apps\/terminal\/dist\/chat\.js --trust$/);
-  assert.equal(defaultCommand('dev'), 'npm run --silent dev -w @sheavly/terminal -- --trust');
+  assert.match(defaultCommand('dev'), /npm run --silent dev -w @sheavly\/terminal -- --trust$/);
 });
 
 test('mode picks the default command, and a command of its own wins over both modes', () => {
@@ -59,20 +59,47 @@ test('a harness that is not built says how to build it, instead of failing on a 
   assert.doesNotMatch(result.stderr, /Cannot find module/);
 });
 
-test('a built harness is run with node, in its folder, with the chat folder and the id it is given', async () => {
+/** A harness folder with a built chat program (`script`, plain JavaScript), and the adapter for it. */
+async function builtHarness(script: string) {
   const harness = await mkdtemp(path.join(os.tmpdir(), 'shv-harness-'));
 
   await mkdir(path.join(harness, 'apps', 'terminal', 'dist'), { recursive: true });
-  await writeFile(
-    path.join(harness, 'apps', 'terminal', 'dist', 'chat.js'),
-    'console.log(JSON.stringify({ argv: process.argv.slice(2), root: process.env.WORKSPACE_ROOT, cwd: process.cwd() }));\n',
-  );
+  await writeFile(path.join(harness, 'apps', 'terminal', 'dist', 'chat.js'), `${script}\n`);
 
   const adapter = createSheavlyV1({
     sheavlyHome: '/s',
     harnessDir: harness,
     command: defaultCommand('built'),
   });
+
+  return { harness, adapter };
+}
+
+test('what npm leaves in the environment of the project it ran is not passed to the harness, which would look for its backend in the wrong repository', async () => {
+  const { adapter } = await builtHarness(
+    'console.log(JSON.stringify({ prefix: process.env.npm_config_local_prefix ?? null, init: process.env.INIT_CWD ?? null, kept: process.env.KEEP_ME ?? null }));',
+  );
+  const spec = adapter.launch({ workspace: '/w' });
+  // As when sheavly-tmux was started with `npm start` and its tmux server inherited this.
+  const result = run({
+    command: spec.command,
+    cwd: spec.cwd,
+    env: {
+      ...spec.env,
+      npm_config_local_prefix: '/some/other/repo',
+      INIT_CWD: '/some/other/repo',
+      KEEP_ME: 'yes',
+    },
+  });
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(JSON.parse(result.stdout), { prefix: null, init: null, kept: 'yes' });
+});
+
+test('a built harness is run with node, in its folder, with the chat folder and the id it is given', async () => {
+  const { harness, adapter } = await builtHarness(
+    'console.log(JSON.stringify({ argv: process.argv.slice(2), root: process.env.WORKSPACE_ROOT, cwd: process.cwd() }));',
+  );
   const started = (target: Parameters<typeof adapter.launch>[0]) => {
     const spec = adapter.launch(target);
     const result = run({ command: spec.command, cwd: spec.cwd, env: spec.env });
