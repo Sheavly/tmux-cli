@@ -7,7 +7,6 @@
   "acceptUnboundKeys": false,
   "keys": {
     "global": {
-      "focusSidebar": "M-h",
       "togglePane": "M-s",
       "scrollBack": "PageUp",
       "copyNewest": "M-c",

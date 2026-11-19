@@ -5,7 +5,7 @@ import path from 'node:path';
 import { after, before, test } from 'node:test';
 import { parseKeyOverrides, resolveBindings } from '../../keys/bindings.ts';
 import { createSheavlyV1 } from '../../harness/adapters/sheavly-v1/index.ts';
-import { hasTmux, tmuxOptions as options } from '../../testing/tmux.fake.ts';
+import { hasTmux, tmuxOptions as options, wait } from '../../testing/tmux.fake.ts';
 import { createTmux } from '../../tmux/tmux.ts';
 import { MAIN_SESSION, PARKING_SESSION, listPanes } from '../panes.ts';
 import { createSession } from '../session.ts';
@@ -249,21 +249,23 @@ test(
 
     await session.ensure({ cols: 100, rows: 30 });
 
-    assert.match(await keys('root'), /M-h .*select-pane -L/);
+    assert.match(await keys('root'), /M-s .*select-pane/);
+    // M-h used to go to the sidebar; it is gone, and a start unbinds it on a server that had it.
+    assert.doesNotMatch(await keys('root'), /M-h /);
 
-    await custom({ global: { focusSidebar: 'M-j', copyLines: 'M-l' } }).ensure({
+    await custom({ global: { togglePane: 'M-j', copyLines: 'M-l' } }).ensure({
       cols: 100,
       rows: 30,
     });
 
     const root = await keys('root');
 
-    assert.doesNotMatch(root, /M-h /);
-    assert.match(root, /M-j .*select-pane -L/);
+    assert.doesNotMatch(root, /M-s /);
+    assert.match(root, /M-j .*select-pane/);
     assert.match(root, /M-l .*display-popup/);
     assert.doesNotMatch(root, /M-g /);
     // What was not moved is still bound.
-    assert.match(root, /M-s .*select-pane/);
+    assert.match(root, /PPage /);
 
     await custom({ copyMode: false }).ensure({ cols: 100, rows: 30 });
 
@@ -275,7 +277,7 @@ test(
     // Back to the defaults, as a later start of the same server does.
     await session.ensure({ cols: 100, rows: 30 });
 
-    assert.match(await keys('root'), /M-h .*select-pane -L/);
+    assert.match(await keys('root'), /M-s .*select-pane/);
     assert.doesNotMatch(await keys('root'), /M-j /);
     assert.match(await keys('copy-mode'), /S-Right .*begin-selection/);
   },
@@ -367,3 +369,79 @@ test(
     );
   },
 );
+
+test(
+  'a start shows the placeholder with the keys of that start, on a server that already had one',
+  options,
+  async () => {
+    const own = createTmux({ socket: `shv-placeholder-${process.pid}` });
+    const startWith = (value: unknown) =>
+      createSession({
+        tmux: own,
+        config,
+        adapter,
+        sidebarCommand: idle,
+        bindings: resolveBindings({ overrides: parseKeyOverrides({ file: 'test', value }) })
+          .bindings,
+      });
+    const placeholderText = async () => {
+      const pane = (await listPanes(own)).find((candidate) => candidate.role === 'placeholder');
+
+      return own.run(['capture-pane', '-p', '-t', pane?.id ?? '']);
+    };
+    const until = async (pattern: RegExp) => {
+      for (let attempt = 0; attempt < 50; attempt += 1) {
+        if (pattern.test(await placeholderText())) return;
+
+        await wait(50);
+      }
+
+      assert.match(await placeholderText(), pattern);
+    };
+    const first = startWith({});
+
+    try {
+      await first.ensure({ cols: 100, rows: 30 });
+      await until(/ n +new chat in the folder/);
+
+      await startWith({ list: { newChat: 'c' } }).ensure({ cols: 100, rows: 30 });
+      await until(/ c +new chat in the folder/);
+      assert.doesNotMatch(await placeholderText(), / n +new chat/);
+    } finally {
+      await first.stop();
+    }
+  },
+);
+
+test('typing in the placeholder shows nothing, and Ctrl+C does not end it', options, async () => {
+  const own = createTmux({ socket: `shv-typing-${process.pid}` });
+  const quiet = createSession({ tmux: own, config, adapter, sidebarCommand: idle });
+  const find = async () =>
+    (await listPanes(own)).find((candidate) => candidate.role === 'placeholder');
+
+  try {
+    await quiet.ensure({ cols: 100, rows: 30 });
+
+    const pane = await find();
+    const screen = () => own.run(['capture-pane', '-p', '-t', pane?.id ?? '']);
+
+    for (
+      let attempt = 0;
+      attempt < 50 && !(await screen()).includes('No chat open');
+      attempt += 1
+    ) {
+      await wait(50);
+    }
+
+    await own.run(['send-keys', '-t', pane?.id ?? '', 'zzqq', 'C-c']);
+    await wait(300);
+
+    const text = await screen();
+
+    assert.doesNotMatch(text, /zzqq/);
+    assert.match(text, /No chat open/);
+    assert.equal((await find())?.dead, false);
+  } finally {
+    await quiet.stop();
+  }
+});

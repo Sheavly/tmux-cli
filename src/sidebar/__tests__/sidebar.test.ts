@@ -440,11 +440,11 @@ const helpFor = (value: unknown, over: object = {}) =>
 test('the help shows the keys as they are now, and leaves out what has none', () => {
   const text = helpFor({
     list: { newChat: 'M-n', rename: null },
-    global: { focusSidebar: 'M-j' },
+    global: { togglePane: 'M-j' },
   });
 
   assert.match(text, /^Alt\+n +new chat in the folder/m);
-  assert.match(text, /^Alt\+j +go to the sidebar/m);
+  assert.match(text, /^Alt\+j +switch between sidebar and chat/m);
   assert.doesNotMatch(text, /rename chat/);
   assert.match(text, /^↑ k +move up/m);
   assert.match(text, /^q +detach/m);

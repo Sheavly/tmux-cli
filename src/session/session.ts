@@ -5,7 +5,6 @@ import type { TerminalLook } from '../terminal/terminal.types.ts';
 import { shellQuote, tmuxSucceeds, type Tmux } from '../tmux/tmux.ts';
 import { applyBindings } from './key-bindings.ts';
 import {
-  PLACEHOLDER,
   createMain,
   createParking,
   keepSidebarWidth,
@@ -13,6 +12,7 @@ import {
   tagPane,
 } from './layout.ts';
 import { MAIN_SESSION, PARKING_SESSION, listPanes, type PaneInfo, type PaneRole } from './panes.ts';
+import { placeholderCommand } from './placeholder.ts';
 import { waitForExit } from './process-exit.ts';
 import { applyServerOptions } from './server-options.ts';
 import { applyTmuxLock } from './tmux-lock.ts';
@@ -83,6 +83,8 @@ export function createSession(params: {
 
   let syncedSize = '';
 
+  const placeholder = placeholderCommand(bindings);
+
   const tag = (paneId: string, option: string, value: string): Promise<void> =>
     tagPane({ tmux, paneId, option, value });
 
@@ -108,9 +110,10 @@ export function createSession(params: {
     const hasMain = await tmuxSucceeds(tmux, ['has-session', '-t', `=${MAIN_SESSION}`]);
     const sidebarId = hasMain
       ? await restartSidebar()
-      : await createMain({ tmux, size, sidebarCommand });
+      : await createMain({ tmux, size, sidebarCommand, placeholder });
 
-    await restoreContentPane({ tmux, sidebarId });
+    await restoreContentPane({ tmux, sidebarId, placeholder });
+    await refreshPlaceholders();
     await keepSidebarWidth({ tmux, sidebarId, width: config.sidebarWidth });
     await syncParkedSizes();
   }
@@ -127,6 +130,18 @@ export function createSession(params: {
     await tmux.run(['respawn-pane', '-k', '-t', sidebar.id, ...sidebarCommand]);
 
     return sidebar.id;
+  }
+
+  /**
+   * A placeholder keeps the text it started with, which names the keys of that start. Running it
+   * again on every start shows the keys of this one, like the sidebar, and no chat is touched.
+   */
+  async function refreshPlaceholders(): Promise<void> {
+    for (const pane of await listPanes(tmux)) {
+      if (pane.role === 'placeholder') {
+        await tmux.run(['respawn-pane', '-k', '-t', pane.id, ...placeholder]);
+      }
+    }
   }
 
   /**
@@ -256,7 +271,7 @@ export function createSession(params: {
           '#{pane_id}',
           '-t',
           `${PARKING_SESSION}:`,
-          ...PLACEHOLDER,
+          ...placeholder,
         ],
       ])
     ).trim();

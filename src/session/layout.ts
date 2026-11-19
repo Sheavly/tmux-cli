@@ -3,13 +3,6 @@ import { MAIN_SESSION, PARKING_SESSION, listPanes } from './panes.ts';
 
 const IDLE = ['sh', '-c', 'exec tail -f /dev/null'];
 
-/** What the pane beside the sidebar shows while no chat is on screen. */
-export const PLACEHOLDER = [
-  'sh',
-  '-c',
-  "printf '\\n  No chat open.\\n\\n  Pick one in the sidebar and press Enter,\\n  or press n for a new chat.\\n'; exec tail -f /dev/null",
-];
-
 type Size = { cols: number; rows: number };
 
 /** A pane's own option, which is how we know what a pane is: `@sheavly_role`, `@sheavly_chat`. */
@@ -40,8 +33,10 @@ export async function createMain(params: {
   tmux: Tmux;
   size: Size;
   sidebarCommand: string[];
+  /** What the pane beside the sidebar runs while no chat is on screen. */
+  placeholder: string[];
 }): Promise<string> {
-  const { tmux, size, sidebarCommand } = params;
+  const { tmux, size, sidebarCommand, placeholder } = params;
   const sidebar = (
     await tmux.run([
       ...['new-session', '-d', '-P', '-F', '#{pane_id}', '-s', MAIN_SESSION, '-n', 'chats'],
@@ -50,17 +45,21 @@ export async function createMain(params: {
   ).trim();
 
   await tagPane({ tmux, paneId: sidebar, option: 'role', value: 'sidebar' });
-  await addPlaceholder({ tmux, sidebarId: sidebar });
+  await addPlaceholder({ tmux, sidebarId: sidebar, placeholder });
 
   return sidebar;
 }
 
 /** The placeholder beside the sidebar, for a session that is new or that lost its content pane. */
-async function addPlaceholder(params: { tmux: Tmux; sidebarId: string }): Promise<void> {
-  const { tmux, sidebarId } = params;
+async function addPlaceholder(params: {
+  tmux: Tmux;
+  sidebarId: string;
+  placeholder: string[];
+}): Promise<void> {
+  const { tmux, sidebarId, placeholder } = params;
   const content = (
     await tmux.run([
-      ...['split-window', '-h', '-d', '-t', sidebarId, '-P', '-F', '#{pane_id}', ...PLACEHOLDER],
+      ...['split-window', '-h', '-d', '-t', sidebarId, '-P', '-F', '#{pane_id}', ...placeholder],
     ])
   ).trim();
 
@@ -68,15 +67,19 @@ async function addPlaceholder(params: { tmux: Tmux; sidebarId: string }): Promis
 }
 
 /** A session whose content pane was closed (tmux's own keys can) gets its placeholder back. */
-export async function restoreContentPane(params: { tmux: Tmux; sidebarId: string }): Promise<void> {
-  const { tmux, sidebarId } = params;
+export async function restoreContentPane(params: {
+  tmux: Tmux;
+  sidebarId: string;
+  placeholder: string[];
+}): Promise<void> {
+  const { tmux, sidebarId, placeholder } = params;
   const panes = await listPanes(tmux);
   const hasContent = panes.some(
     (pane) =>
       pane.session === MAIN_SESSION && (pane.role === 'chat' || pane.role === 'placeholder'),
   );
 
-  if (!hasContent) await addPlaceholder({ tmux, sidebarId });
+  if (!hasContent) await addPlaceholder({ tmux, sidebarId, placeholder });
 }
 
 /** Keeps the sidebar at its width, now and whenever the window is resized or a client attaches. */

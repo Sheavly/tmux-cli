@@ -7,7 +7,7 @@ action with one key, a list of keys, or `null` for none:
 ```json
 {
   "keys": {
-    "global": { "focusSidebar": "M-j", "copyLines": ["M-g", "C-g"] },
+    "global": { "togglePane": "M-j", "copyLines": ["M-g", "C-g"] },
     "list": { "newChat": "c", "stop": null },
     "navigation": { "up": ["Up", "k"], "down": ["Down", "j"] },
     "copyMode": { "quit": ["q", "C-q"] }
@@ -21,7 +21,7 @@ server is updated, and the keys that moved are unbound.
 
 **Key names** are tmux's: a character (`n`, `G`, `~`, `Space`), `Enter`, `Escape`, `BSpace`,
 `Delete`, `Up` `Down` `Left` `Right`, `PageUp` `PageDown`, with modifiers `M-` (Alt), `C-` (Ctrl),
-`S-` (Shift): `M-h`, `C-c`, `C-S-Left`. Write a capital letter for Shift with a letter (`G`, not
+`S-` (Shift): `M-s`, `C-c`, `C-S-Left`. Write a capital letter for Shift with a letter (`G`, not
 `S-g`). A terminal program can't tell some keys apart, so on the sidebar's screens `C-h`, `C-i`,
 `C-j` and `C-m` (the same as Backspace, Tab and Enter), `Home`, `End`, function keys and
 modifiers on `Enter`/`Escape`/`Space` are refused, with the reason. Alt keys need your terminal to
@@ -36,7 +36,6 @@ character is always typed, so a letter bound to a motion only works on the other
 
 | Action                                                                      | Default                            | Does                                                 |
 | --------------------------------------------------------------------------- | ---------------------------------- | ---------------------------------------------------- |
-| `global.focusSidebar`                                                       | `M-h`                              | go to the sidebar                                    |
 | `global.togglePane`                                                         | `M-s`                              | switch between sidebar and chat                      |
 | `global.scrollBack`                                                         | `PageUp`                           | scroll back in the chat                              |
 | `global.copyNewest`                                                         | `M-c`                              | copy mode at the newest line                         |
@@ -52,7 +51,7 @@ character is always typed, so a letter bound to a motion only works on the other
 | `navigation.pageUp` `pageDown`                                              | `PageUp` `PageDown`                | page                                                 |
 | `navigation.top` `bottom`                                                   | `g` `G`                            | first and last                                       |
 | `navigation.open`                                                           | `Enter`                            | open the chat, folder or profile                     |
-| `navigation.help`                                                           | `?`                                | show the key help                                    |
+| `navigation.help`                                                           | `?`                                | show help                                            |
 | `list.selectActive`                                                         | `Left` `Right`                     | select the chat on screen                            |
 | `list.newChat`                                                              | `n`                                | new chat in the folder                               |
 | `list.browseFolder`                                                         | `N`                                | new chat: browse for a folder                        |
@@ -87,8 +86,8 @@ character is always typed, so a letter bound to a motion only works on the other
 | `viewer.panLeft` `panRight`                                                 | `Left` `h` / `Right` `l`           | pan                                                  |
 | `viewer.nextChange` `previousChange`                                        | `n` `p`                            | between changes                                      |
 
-The numbered-lines popup is closed by `global.copyLines` again, and `global.togglePane` and
-`global.focusSidebar` close it and go to the sidebar: it has no keys for those of its own.
+The numbered-lines popup is closed by `global.copyLines` again, and `global.togglePane` closes it
+and goes to the sidebar: it has no keys for those of its own.
 
 ## We override tmux's copy mode
 
@@ -111,6 +110,6 @@ that tmux itself binds, like `Enter` or `Esc`) stays unbound until the server is
 
 Taking the key off something you need can leave you stuck (no way to detach or to open a chat), so a
 start tells you which of those have no key (`navigation.up`, `down`, `open`, `list.detach`,
-`list.quitAll`, `global.focusSidebar`) and asks `Start anyway? [y/N]`. `"acceptUnboundKeys": true`
+`list.quitAll`, `global.togglePane`) and asks `Start anyway? [y/N]`. `"acceptUnboundKeys": true`
 in the config, or `--yes`, says it was meant and stops the asking; with no terminal to ask on and
 neither of those, the start does not go on.

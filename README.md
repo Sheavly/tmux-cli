@@ -50,7 +50,7 @@ These are the default keys; every one of them can be changed (see
 | `r`              | redraw: repaint the sidebar, signal the chat, reload the list                                                                                                                           |
 | `q`              | detach; chats keep running. `Q` stops everything                                                                                                                                        |
 
-`M-h` and `M-s` both switch focus between the sidebar and the chat. The sidebar's `r` redraws the chat you are in. The mouse works.
+`M-s` switches focus between the sidebar and the chat. The sidebar's `r` redraws the chat you are in. The mouse works.
 
 ## Scrolling and copying from a chat, keyboard only
 
@@ -66,7 +66,7 @@ With the chat focused:
   conversation (line 0 of `Alt+g`), skipping the status line and the input box.
 - `Alt+g` numbers the chat's lines in a popup over the chat pane, keeping the chat's colours (the
   sidebar stays visible;
-  `Alt+g` closes it; `Alt+s` and `Alt+h` close it and go to the sidebar), `0` being the newest line of the
+  `Alt+g` closes it; `Alt+s` closes it and goes to the sidebar), `0` being the newest line of the
   conversation (the status line, the input box and a prompt you are writing are left out). Type a number
   (the row is highlighted as you type) and press `Enter`: the chat is left in copy mode with the
   cursor at the start of that line. Wrapped lines count as several. `Esc` clears the number, then
@@ -134,7 +134,7 @@ command of your own.
 
 `escapeTime` is how long tmux waits (milliseconds, 0 to 500) after an `Esc` for the rest of a key. An
 Alt key reaches it as `Esc` and the key, so over a slow ssh connection a higher value (50 to 100)
-keeps `Alt+h` from being read as `Esc` and a typed `h`.
+keeps `Alt+s` from being read as `Esc` and a typed `h`.
 
 `lockTmux` (on by default) switches tmux's own keys off inside the session. The session is the
 sidebar and one pane beside it, and tmux's defaults can break that: `C-b c` opens a window, `C-b %`

@@ -38,17 +38,11 @@ const LISTS = ['list', 'browser', 'profiles', 'files'] as const;
 export const ACTIONS = [
   // tmux keys, in every pane
   {
-    id: 'global.focusSidebar',
-    keys: ['M-h'],
-    modes: ['global', 'popup'],
-    description: 'go to the sidebar',
-    critical: true,
-  },
-  {
     id: 'global.togglePane',
     keys: ['M-s'],
     modes: ['global', 'popup'],
     description: 'switch between sidebar and chat',
+    critical: true,
   },
   {
     id: 'global.scrollBack',
@@ -163,7 +157,7 @@ export const ACTIONS = [
     id: 'navigation.help',
     keys: ['?'],
     modes: ['list', 'browser'],
-    description: 'show this help',
+    description: 'show help',
   },
 
   // the chat list
@@ -277,7 +271,7 @@ export const ACTIONS = [
     description: 'stop everything',
   },
 
-  // the numbered lines popup (its Alt+g, Alt+s and Alt+h are the global keys)
+  // the numbered lines popup (its Alt+g and Alt+s are the global keys)
   { id: 'popup.scrollUp', keys: ['Up'], modes: ['popup'], description: 'scroll up' },
   { id: 'popup.scrollDown', keys: ['Down'], modes: ['popup'], description: 'scroll down' },
   { id: 'popup.pageUp', keys: ['PageUp'], modes: ['popup'], description: 'page up' },

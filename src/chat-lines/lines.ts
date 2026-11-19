@@ -256,11 +256,11 @@ export async function runLines(params: {
     return ` type a line number  ${scroll}  ${cancel}`;
   }
 
-  /** The key that opened the popup closes it; the keys that switch panes close it and go to the sidebar. */
+  /** The key that opened the popup closes it; the key that switches panes closes it and goes to the sidebar. */
   async function leaveIfAsked(action: ActionId | undefined): Promise<void> {
     if (action === 'global.copyLines') process.exit(0);
 
-    if (action !== 'global.togglePane' && action !== 'global.focusSidebar') return;
+    if (action !== 'global.togglePane') return;
 
     await focusSidebar({ tmux, pane });
     process.exit(0);

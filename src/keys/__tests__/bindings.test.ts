@@ -140,7 +140,7 @@ test('the help screen, the questions, the popup and the viewer keep their keys',
 
   assert.equal(does('popup', 'M-g'), 'global.copyLines');
   assert.equal(does('popup', 'M-s'), 'global.togglePane');
-  assert.equal(does('popup', 'M-h'), 'global.focusSidebar');
+  assert.equal(does('popup', 'M-h'), undefined);
   assert.equal(does('popup', 'Enter'), 'popup.jump');
   assert.equal(does('popup', 'Escape'), 'popup.cancel');
   assert.equal(does('popup', 'BSpace'), 'popup.erase');
@@ -173,7 +173,6 @@ test('the help screen, the questions, the popup and the viewer keep their keys',
 });
 
 test('the tmux keys keep what they were bound to', () => {
-  assert.deepEqual(defaults.keys('global.focusSidebar'), ['M-h']);
   assert.deepEqual(defaults.keys('global.togglePane'), ['M-s']);
   assert.deepEqual(defaults.keys('global.scrollBack'), ['PageUp']);
   assert.deepEqual(defaults.keys('global.copyNewest'), ['M-c']);

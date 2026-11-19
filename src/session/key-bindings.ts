@@ -7,7 +7,10 @@ import { LINES_PANE_OPTION } from './panes.ts';
 /** The server option that lists the keys the last start bound, as `table:key` and a space. */
 const BOUND_OPTION = '@sheavly_bound_keys';
 const ROOT_TABLE = 'root';
-/** What starts before the list was kept bound, and `M-f`, which was bound once and then given up. */
+/**
+ * What starts before the list was kept bound, and `M-f` and `M-h`, which were bound once and then
+ * given up: a running server may still have them.
+ */
 const LEGACY_BOUND = ['M-h', 'M-s', 'M-c', 'M-g', 'M-f', 'PageUp', 'Escape'].map(
   (key) => `${ROOT_TABLE}:${key}`,
 );
@@ -84,7 +87,6 @@ const IN_CHAT = ['if-shell', '-F', '#{==:#{@sheavly_role},chat}'];
 export function rootBindings(params: { bindings: Bindings; commands: KeyCommands }): RootBinding[] {
   const { bindings, commands } = params;
   const entries: [ActionId, (key: string) => string[] | undefined][] = [
-    ['global.focusSidebar', () => ['select-pane', '-L']],
     // PageUp scrolls the chat's history, the way the mouse wheel does: it enters tmux's copy mode,
     // where PageDown scrolls back and leaving the bottom ends it. A program on the alternate
     // screen (the sidebar, an editor) has no history to scroll and gets the key itself.

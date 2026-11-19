@@ -100,7 +100,7 @@ test('the sidebar answers to rebound keys and not to the old ones', options, asy
     navigation: { help: 'H', down: 'J' },
     list: { browseFolder: 'B' },
     browser: { cancel: 'C' },
-    global: { focusSidebar: 'M-j' },
+    global: { togglePane: 'M-j' },
   });
 
   const pane = await start('sidebar', ['sidebar']);
@@ -117,9 +117,9 @@ test('the sidebar answers to rebound keys and not to the old ones', options, asy
 
   const help = await plain(pane);
 
-  assert.match(help, /Alt\+j +go to the sidebar/);
-  assert.doesNotMatch(help, /Alt\+h/);
-  assert.match(help, /^ *H +show this help/m);
+  assert.match(help, /Alt\+j +switch between/);
+  assert.doesNotMatch(help, /Alt\+s/);
+  assert.match(help, /^ *H +show help/m);
   assert.match(help, /^ *B +new chat: browse/m);
   assert.doesNotMatch(help, /^ *N +new chat/m);
 
@@ -168,7 +168,7 @@ test('the sidebar with its keys as they always were', options, async () => {
   await shows(pane, '? help');
   await type(pane, '?');
   await shows(pane, 'Help');
-  assert.match(await plain(pane), /Alt\+h +go to the sidebar/);
+  assert.match(await plain(pane), /Alt\+s +switch between/);
   await type(pane, 'z');
   await gone(pane, 'Help');
 

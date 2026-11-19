@@ -14,7 +14,7 @@ terminal does something it doesn't say here, an issue with the terminal's name a
 | The background colour query (OSC 11) | drawing the pane divider so it disappears            | no answer in 300 ms keeps tmux's own divider. Not asked over ssh, where a late answer would print as text                      |
 | The clipboard sequence (OSC 52)      | copying to the system clipboard                      | with `pbcopy`, `wl-copy`, `xclip`, `xsel` or `clip.exe` installed, copying also pipes to it                                    |
 | Focus reports                        | lighting the half of the divider by the focused pane | the sidebar asks tmux which pane has the keyboard every second, so it lags by up to that                                       |
-| Alt as the Meta key                  | the default keys `M-h`, `M-s`, `M-c`, `M-g`          | see below: a terminal setting, or other keys                                                                                   |
+| Alt as the Meta key                  | the default keys `M-s`, `M-c`, `M-g`                 | see below: a terminal setting, or other keys                                                                                   |
 
 Text is measured in columns, not characters: Chinese, Japanese, Korean and emoji take two, accents
 take none. Characters whose width the terminal's font decides (the "ambiguous" ones, such as `│` and
@@ -38,7 +38,7 @@ is told to treat it as Alt. The setting, as of writing (check the terminal's own
 
 If Alt cannot be used (some keyboard layouts send AltGr as Alt and Ctrl, which can swallow
 characters), change the keys instead: [Keybindings](keybindings.md) has every default and how to
-rebind it, for example `"focusSidebar": "C-o"`.
+rebind it, for example `"togglePane": "C-o"`.
 
 Over a slow ssh connection an Alt key can arrive as an Escape and, a moment later, the key, and tmux
 then takes them for two. `escapeTime` in the config (milliseconds, 10 by default) is how long tmux

@@ -41,7 +41,7 @@ test(
     }
 
     // ...what the session uses is not: our keys, the wheel, and dragging a border.
-    assert.match(root, /M-h .*select-pane -L/);
+    assert.match(root, /M-s .*select-pane/);
     assert.match(root, /WheelUpPane /);
     assert.match(root, /MouseDrag1Border /);
   },

@@ -16,16 +16,15 @@ const rootFor = (value: unknown, given: KeyCommands = commands) =>
 const keysOf = (bindings: { key: string }[]): string[] => bindings.map((binding) => binding.key);
 
 test('with the default keys the root table has the keys it always had', () => {
-  assert.deepEqual(keysOf(rootFor({})), ['M-h', 'PageUp', 'M-s', 'M-c', 'Escape', 'M-g']);
+  assert.deepEqual(keysOf(rootFor({})), ['PageUp', 'M-s', 'M-c', 'Escape', 'M-g']);
 });
 
 test('a rebound key is bound to the same command, and the old key is not bound', () => {
-  const bindings = rootFor({ global: { focusSidebar: ['M-j', 'C-j'], togglePane: null } });
-  const focus = bindings.filter((binding) => binding.command.join(' ') === 'select-pane -L');
+  const bindings = rootFor({ global: { togglePane: ['M-j', 'C-j'] } });
+  const toggle = bindings.filter((binding) => binding.command.join(' ') === 'select-pane -t :.+');
 
-  assert.deepEqual(keysOf(focus), ['M-j', 'C-j']);
-  assert.ok(!keysOf(bindings).includes('M-h'));
-  assert.ok(!bindings.some((binding) => binding.command.join(' ') === 'select-pane -t :.+'));
+  assert.deepEqual(keysOf(toggle), ['M-j', 'C-j']);
+  assert.ok(!keysOf(bindings).includes('M-s'));
 });
 
 test('a key that passes through sends itself when it is not for us', () => {
@@ -60,5 +59,5 @@ test('the keys that run a command of ours are bound only in a chat, and only wit
     assert.equal(inChat(key), 'if-shell -F #{==:#{@sheavly_role},chat}', key);
   }
 
-  assert.deepEqual(keysOf(rootFor({}, {})), ['M-h', 'PageUp', 'M-s', 'M-c']);
+  assert.deepEqual(keysOf(rootFor({}, {})), ['PageUp', 'M-s', 'M-c']);
 });
