@@ -63,7 +63,20 @@ export async function applyBindings(params: {
 
   await tmux.run(['set-option', '-g', BOUND_OPTION, bound.join(' ')]);
   await tmux.run(['set-hook', '-g', 'pane-mode-changed', SIDEBAR_LEAVES_MODE]);
+  await tmux.run(['set-hook', '-g', 'after-select-pane', PLACEHOLDER_GIVES_FOCUS_BACK]);
 }
+
+/**
+ * The placeholder has nothing to type into, so whatever way it got the keyboard (the toggle key,
+ * a click, tmux's own keys) it goes straight back to the sidebar, which is always left of it.
+ * A hook and not a change to each key, so no way in is missed.
+ */
+const PLACEHOLDER_GIVES_FOCUS_BACK = [
+  'if-shell -F "#{==:#{@sheavly_role},placeholder}"',
+  // No `-t`: `#{hook_pane}` is empty inside the quoted command, and the pane that was just
+  // selected is already the one `-L` starts from.
+  '"select-pane -L"',
+].join(' ');
 
 /**
  * The sidebar has no use for a tmux mode, so whatever way one was entered (a key, the mouse, a

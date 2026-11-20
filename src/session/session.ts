@@ -327,6 +327,12 @@ export function createSession(params: {
       const spare = await findOrParkPlaceholder({ tmux, panes, placeholder });
 
       await tmux.run(['swap-pane', '-d', '-s', spare.id, '-t', pane.id]);
+
+      // The hook only sees a pane being selected; the placeholder may take the keyboard by the
+      // chat it replaces being the one that had it.
+      const sidebar = panes.find((candidate) => candidate.role === 'sidebar');
+
+      if (pane.active && sidebar) await tmux.run(['select-pane', '-t', sidebar.id]);
     }
 
     await tmux.run(['kill-pane', '-t', pane.id]);
