@@ -1,13 +1,14 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { fakePane } from '../../testing/pane.fake.ts';
-import { parsePane, pendingChats, type PaneInfo } from '../panes.ts';
+import { isContentPane, parsePane, pendingChats, type PaneInfo } from '../panes.ts';
 
 test('parsePane reads a tagged pane and one with no tags', () => {
   assert.deepEqual(parsePane('%3\tsheavly\t0\t\tchat\tabc\t/w\t1700'), {
     id: '%3',
     session: 'sheavly',
     role: 'chat',
+    follow: '',
     dead: false,
     deadStatus: 0,
     chat: 'abc',
@@ -29,6 +30,20 @@ test('parsePane reads a tagged pane and one with no tags', () => {
   assert.equal(parsePane('%9\tother\t0\t\t\t\t\t').role, '');
   assert.equal(parsePane('%9\tsheavly\t1\t\tchat\t\t\t').deadStatus, -1);
   assert.throws(() => parsePane('garbage'));
+});
+
+test('a follow pane says what it follows, and is a pane that can be beside the sidebar', () => {
+  const followed = parsePane('%5\tsheavly\t0\t\tfollow\t\t/w\t1700\t5\t\t0\t80\t24\tc1:t2');
+
+  assert.equal(followed.role, 'follow');
+  assert.equal(followed.follow, 'c1:t2');
+
+  const roles = ['chat', 'follow', 'placeholder', 'sidebar', 'anchor'] as const;
+
+  assert.deepEqual(
+    roles.filter((role) => isContentPane(fakePane({ role }))),
+    ['chat', 'follow', 'placeholder'],
+  );
 });
 
 const pane = (over: Partial<PaneInfo>): PaneInfo => fakePane({ startedAt: 100_000, ...over });

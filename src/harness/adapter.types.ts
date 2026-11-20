@@ -61,6 +61,20 @@ export type EditedFile = {
   count: number;
 };
 
+/** Something a running chat started that is still running: a sub-agent or a background process. */
+export type ChatChild = {
+  /** Unique among the chat's children; only the adapter knows what it is made of. */
+  id: string;
+  /** The child it runs under; absent when it runs directly under the chat. */
+  parentId?: string;
+  /** A sub-agent, a command that will end, or a service that runs until it is stopped. */
+  kind: 'agent' | 'process' | 'service';
+  /** What the child is called, cleaned for one line. */
+  name: string;
+  /** Epoch milliseconds when it started. */
+  startedAt: number;
+};
+
 /** What the manager keeps between looks at one chat's edits; the adapter owns what is inside. */
 export type EditState = { files: Map<string, EditedFile>; cursor: unknown };
 
@@ -108,6 +122,30 @@ export type HarnessAdapter = {
   promptText?: (rows: readonly string[]) => string | undefined;
   /** The tmux key names that empty the input box when it holds `text`. */
   clearPromptKeys?: (text: string) => string[];
+  /**
+   * What a running chat has started and is still running, which the sidebar shows under it. Left
+   * out when the harness can't tell, and then the chats have no children.
+   */
+  children?: {
+    /**
+     * The chat's running children, parents before their own children. Only those that started at
+     * or after `since` (epoch milliseconds, when the chat's process started) count: what an earlier
+     * run of the same conversation left behind is not running any more.
+     */
+    list: (chat: StoredChat, since: number) => Promise<ChatChild[]>;
+    /**
+     * Writes what the child writes, as it does, until it ends or `signal` aborts: a sub-agent's
+     * work, or a command's output, as text for the terminal (escape sequences allowed) cut to
+     * `columns`, the width of the pane. Read only; nothing is sent to the child.
+     */
+    follow: (params: {
+      chat: StoredChat;
+      childId: string;
+      columns: number;
+      write: (text: string) => void;
+      signal: AbortSignal;
+    }) => Promise<void>;
+  };
   /** The files a chat changed. Left out when the harness can't tell. */
   edits?: {
     /** Folds what the chat has done since the last call into `state`; true if anything changed. */

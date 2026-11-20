@@ -1,5 +1,5 @@
 import type { Tmux } from '../tmux/tmux.ts';
-import { MAIN_SESSION, PARKING_SESSION, listPanes } from './panes.ts';
+import { MAIN_SESSION, PARKING_SESSION, isContentPane, listPanes, type PaneInfo } from './panes.ts';
 
 const IDLE = ['sh', '-c', 'exec tail -f /dev/null'];
 
@@ -66,6 +66,47 @@ async function addPlaceholder(params: {
   await tagPane({ tmux, paneId: content, option: 'role', value: 'placeholder' });
 }
 
+/**
+ * The placeholder pane, or a new one parked in a window of its own, for when a pane on screen goes
+ * and the sidebar's neighbour must be something.
+ */
+export async function findOrParkPlaceholder(params: {
+  tmux: Tmux;
+  panes: PaneInfo[];
+  placeholder: string[];
+}): Promise<PaneInfo> {
+  const { tmux, panes, placeholder } = params;
+  const found = panes.find((pane) => pane.role === 'placeholder');
+
+  if (found) return found;
+
+  const paneId = (
+    await tmux.run([
+      ...['new-window', '-d', '-P', '-F', '#{pane_id}', '-t', `${PARKING_SESSION}:`],
+      ...placeholder,
+    ])
+  ).trim();
+
+  await tagPane({ tmux, paneId, option: 'role', value: 'placeholder' });
+
+  return {
+    id: paneId,
+    session: PARKING_SESSION,
+    role: 'placeholder',
+    follow: '',
+    dead: false,
+    deadStatus: 0,
+    chat: '',
+    profile: '',
+    workspace: '',
+    startedAt: 0,
+    pid: 0,
+    active: false,
+    width: 0,
+    height: 0,
+  };
+}
+
 /** A session whose content pane was closed (tmux's own keys can) gets its placeholder back. */
 export async function restoreContentPane(params: {
   tmux: Tmux;
@@ -74,10 +115,7 @@ export async function restoreContentPane(params: {
 }): Promise<void> {
   const { tmux, sidebarId, placeholder } = params;
   const panes = await listPanes(tmux);
-  const hasContent = panes.some(
-    (pane) =>
-      pane.session === MAIN_SESSION && (pane.role === 'chat' || pane.role === 'placeholder'),
-  );
+  const hasContent = panes.some((pane) => pane.session === MAIN_SESSION && isContentPane(pane));
 
   if (!hasContent) await addPlaceholder({ tmux, sidebarId, placeholder });
 }

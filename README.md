@@ -39,7 +39,7 @@ These are the default keys; every one of them can be changed (see
 | Key (sidebar)    | Does                                                                                                                                                                                    |
 | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `j` `k` / arrows | move; `g` `G` first and last                                                                                                                                                            |
-| `Enter`          | open the chat (starts it if it isn't running); on a folder, fold it                                                                                                                     |
+| `Enter`          | open the chat (starts it if it isn't running); on a folder, fold it; on a sub-agent or background command under a chat, show what it writes                                             |
 | `n`              | new chat in the selected row's folder                                                                                                                                                   |
 | `N`              | browse for a folder (starts in `~`) and start a chat there                                                                                                                              |
 | `p`              | switch profile: the list then shows only that profile's chats (see Profiles below)                                                                                                      |
@@ -51,6 +51,25 @@ These are the default keys; every one of them can be changed (see
 | `q`              | detach; chats keep running. `Q` stops everything                                                                                                                                        |
 
 `M-s` switches focus between the sidebar and the chat. The sidebar's `r` redraws the chat you are in. The mouse works.
+
+## Sub-agents and background commands
+
+A running chat lists what it has started and is still running, under its row: `◆` a sub-agent,
+`▸` a command that will end, `∞` a service that runs until it is stopped. A sub-agent's own
+sub-agents and commands sit under it, one step further in. Move to one as you move to a chat and
+press `Enter`: the pane beside the sidebar then shows what it writes as it writes it, a sub-agent's
+work (the task it was given, what it says, one row for each tool it calls) or a command's output.
+It is read only: nothing typed there reaches the child or the chat.
+
+- Only what is running is listed. When a child ends it leaves the list; if you were watching it,
+  the pane stays so the end can be read (it says how it ended), until you open something else.
+- A chat that isn't running shows no children, however it stopped (`x`, `/exit`, a crash, or never
+  started): they go from the list at once, and the pane of one you were watching gives way to the
+  placeholder. The harness's own record keeps a stopped chat's children as running, so for a chat
+  that is running only those started since its process did are shown.
+- A long output is followed from its last 512 KB. Scroll back with `PageUp` as in a chat.
+- This needs an adapter that says what a chat has started (`children`, see
+  [Harness adapters](docs/adapters.md)); sheavly-v1 does, from the conversation's own files.
 
 ## Scrolling and copying from a chat, keyboard only
 

@@ -11,7 +11,7 @@ src/
   chat-lines/             the numbered lines popup
   viewer/                 the file viewer
   harness/                what is specific to sheavly: the adapter interface and its adapters
-  files/ profiles/ escape/ recap/ loader/ terminal/ tmux/ chats/   smaller pieces
+  files/ profiles/ escape/ recap/ follow/ loader/ terminal/ tmux/ chats/   smaller pieces
   testing/                helpers for tests, never imported by the program
 lint/                     the ESLint rules we use and the file-kind policy
 scripts/                  repository tooling in plain Node: the docs check, and setup/ (npm run setup)

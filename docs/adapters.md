@@ -22,6 +22,16 @@ the harness folder, `SHEAVLY_HARNESS_DIR`), which are the harness's tests, and c
 workspace folder no longer exists, since they can't be reopened there. A folder that comes back
 brings its chats back at the next refresh.
 
+What a running chat has started (the optional `children`) is a list of `ChatChild` (an id, the id
+of the child it runs under, whether it is a sub-agent, a command or a service, a name and a start
+time) and a `follow` that writes what one of them writes until it ends. `list` is given the time the
+chat's process started and returns only children that started after it and are still running; the
+sidebar draws them under the chat and `Enter` runs `follow` in a pane. Without `children` a chat
+has none. For sheavly-v1 both read the conversation's `stream.jsonl`, `agents/` and `outputs/`:
+files the harness keeps for itself and does not promise to other programs, so every line is
+checked, one that isn't what is expected is skipped, and a sheavly with other files is a new
+adapter, not a change here.
+
 `src/harness/adapters/sheavly-v1/` is the adapter for sheavly as it is today. A new sheavly API
 means a new folder next to it that exports an `AdapterDefinition`, and one entry in the list in
 `src/harness/index.ts`; pick it with the `adapter` setting.

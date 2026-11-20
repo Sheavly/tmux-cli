@@ -10,12 +10,15 @@ export const LOADING_OPTION = '@sheavly_loading';
 /** The chat pane that the Alt+g popup shows, written by the key binding just before it opens. */
 export const LINES_PANE_OPTION = '@sheavly_lines_pane';
 
-export type PaneRole = 'sidebar' | 'chat' | 'placeholder' | 'anchor';
+/** A `follow` pane shows what a chat's sub-agent or background command writes, and takes no input. */
+export type PaneRole = 'sidebar' | 'chat' | 'placeholder' | 'anchor' | 'follow';
 
 export type PaneInfo = {
   id: string;
   session: string;
   role: PaneRole | '';
+  /** What a follow pane follows, as `<conversation id>:<child id>`; empty for any other pane. */
+  follow: string;
   dead: boolean;
   /** The exit status of a dead pane (0 for a chat that was ended on purpose, -1 when a signal ended it). */
   deadStatus: number;
@@ -49,9 +52,15 @@ const FIELDS = [
   '#{pane_active}',
   '#{pane_width}',
   '#{pane_height}',
+  '#{@sheavly_follow}',
 ];
 
-const ROLES: readonly string[] = ['sidebar', 'chat', 'placeholder', 'anchor'];
+const ROLES: readonly string[] = ['sidebar', 'chat', 'placeholder', 'anchor', 'follow'];
+
+/** Whether a pane can be the one beside the sidebar on screen: a chat, what follows a child of one, or the placeholder. */
+export function isContentPane(pane: PaneInfo): boolean {
+  return pane.role === 'chat' || pane.role === 'follow' || pane.role === 'placeholder';
+}
 
 /** Our panes in both sessions. Panes tmux knows that we didn't tag come back with no role. */
 export async function listPanes(tmux: Tmux): Promise<PaneInfo[]> {
@@ -79,6 +88,7 @@ export function parsePane(line: string): PaneInfo {
     active = '',
     width = '',
     height = '',
+    follow = '',
   ] = line.split('\t');
 
   if (!id.startsWith('%')) throw new Error(`Unexpected tmux pane line: ${line}`);
@@ -87,6 +97,7 @@ export function parsePane(line: string): PaneInfo {
     id,
     session,
     role: ROLES.includes(role) ? (role as PaneRole) : '',
+    follow,
     dead: dead === '1',
     deadStatus: exitStatusOf({ deadStatus, dead: dead === '1' }),
     chat,

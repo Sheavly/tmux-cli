@@ -10,6 +10,14 @@
   since every stored title is "Conversation".
 - **A new chat's id** isn't reported by sheavly, so the sidebar matches the pane to the earliest
   new conversation in the same folder, and from then on it counts as that stored chat.
+- **Children of a chat** (sub-agents and background commands) are read from the harness's files for
+  each running chat, every refresh, and shown as rows under it. Opening one starts a `follow` pane
+  (`sheavly-tmux follow <conversation id> <child id>`) in the parking session and swaps it in like a
+  chat: it writes what the child writes, takes no input, and is removed once it is off screen, or
+  when its chat is no longer running (then the placeholder takes its place). A chat that isn't
+  running has no children rows, and for one that is only children started since the chat's own
+  pane did are listed, because a stopped chat leaves its children "running" in the harness's
+  record.
 - Starting a chat is `WORKSPACE_ROOT=<folder> <command> [--resume <id>]` run in the harness folder.
   For sheavly-v1 the command runs the harness's build (`node apps/terminal/dist/chat.js --trust`)
   unless `"mode": "dev"` asks for its source (see Settings in the README).

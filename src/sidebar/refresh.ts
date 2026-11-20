@@ -1,4 +1,5 @@
 import { MAIN_SESSION, listPanes, pendingChats, type PaneInfo } from '../session/panes.ts';
+import { refreshChildren } from './children-refresh.ts';
 import { refreshEdits } from './files-screen.ts';
 import { settleProfile } from './profiles-screen.ts';
 import type { Focus } from './render.ts';
@@ -46,7 +47,9 @@ export async function refresh(ctx: SidebarContext): Promise<void> {
     if (state.mode.kind === 'files') await refreshEdits(ctx, state.mode);
 
     await adoptNewChats(ctx);
+    await refreshChildren(ctx);
     await session.reapFinished(state.panes);
+    await session.reapStaleFollows(state.panes);
     await session.syncParkedSizes(state.panes);
   } catch (caughtError) {
     state.message = (caughtError as Error).message;

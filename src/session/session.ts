@@ -7,15 +7,27 @@ import { applyBindings } from './key-bindings.ts';
 import {
   createMain,
   createParking,
+  findOrParkPlaceholder,
   keepSidebarWidth,
   restoreContentPane,
   tagPane,
 } from './layout.ts';
-import { MAIN_SESSION, PARKING_SESSION, listPanes, type PaneInfo, type PaneRole } from './panes.ts';
+import { chatOfFollow, followKey, spawnFollowPane, type FollowTarget } from './follow-panes.ts';
+import {
+  MAIN_SESSION,
+  PARKING_SESSION,
+  isContentPane,
+  listPanes,
+  type PaneInfo,
+  type PaneRole,
+} from './panes.ts';
 import { placeholderCommand } from './placeholder.ts';
 import { waitForExit } from './process-exit.ts';
 import { applyServerOptions } from './server-options.ts';
 import { applyTmuxLock } from './tmux-lock.ts';
+
+/** How long a follow pane may wait in the parking session before it is taken for abandoned. */
+const FOLLOW_GRACE_MS = 5_000;
 
 export type OpenTarget = {
   workspace: string;
@@ -65,6 +77,11 @@ export function createSession(params: {
    * finds its pane by $TMUX_PANE; without it no loader is shown.
    */
   loaderCommand?: string;
+  /**
+   * The shell command that shows what one child of a chat writes, given the conversation id and
+   * the child's id; without it a child can't be opened.
+   */
+  followCommand?: string;
   now?: () => number;
 }) {
   const {
@@ -78,6 +95,7 @@ export function createSession(params: {
     escapeCommand,
     recapCommand,
     loaderCommand,
+    followCommand,
     now = Date.now,
   } = params;
 
@@ -150,10 +168,7 @@ export function createSession(params: {
    * tmux.conf) has no role and is none of ours to count, move or kill.
    */
   function contentSlot(panes: PaneInfo[]): PaneInfo {
-    const slots = panes.filter(
-      (pane) =>
-        pane.session === MAIN_SESSION && (pane.role === 'chat' || pane.role === 'placeholder'),
-    );
+    const slots = panes.filter((pane) => pane.session === MAIN_SESSION && isContentPane(pane));
     const [slot] = slots;
 
     if (!slot || slots.length !== 1) {
@@ -198,6 +213,7 @@ export function createSession(params: {
       id: paneId,
       session: PARKING_SESSION,
       role: 'chat',
+      follow: '',
       dead: false,
       deadStatus: 0,
       chat: target.chatId ?? '',
@@ -256,49 +272,56 @@ export function createSession(params: {
     await swapIntoContent(chatPane(panes, paneId), panes);
   }
 
-  async function placeholderPane(panes: PaneInfo[]): Promise<PaneInfo> {
-    const found = panes.find((pane) => pane.role === 'placeholder');
+  /**
+   * Shows what one child of a chat writes beside the sidebar. The one already on screen is only
+   * given the keyboard; any other is started again, since a follow pane that was left is removed
+   * (`reapParkedFollows`) and starts from the child's beginning.
+   */
+  async function openFollow(target: FollowTarget): Promise<string> {
+    if (!followCommand) throw new Error('This session has no command to follow a child with.');
 
-    if (found) return found;
+    const panes = await listPanes(tmux);
+    const key = followKey(target);
+    const existing = panes.find((pane) => pane.role === 'follow' && pane.follow === key);
+    const pane = existing ?? (await spawnFollowPane({ tmux, followCommand, target, now: now() }));
 
-    const paneId = (
-      await tmux.run([
-        ...[
-          'new-window',
-          '-d',
-          '-P',
-          '-F',
-          '#{pane_id}',
-          '-t',
-          `${PARKING_SESSION}:`,
-          ...placeholder,
-        ],
-      ])
-    ).trim();
+    if (!existing) {
+      // A new window gets its session's size, not the default: set it before the pane moves.
+      syncedSize = '';
+      await syncParkedSizes();
+    }
 
-    await tag(paneId, 'role', 'placeholder');
+    await swapIntoContent(pane, panes);
 
-    return {
-      id: paneId,
-      session: PARKING_SESSION,
-      role: 'placeholder',
-      dead: false,
-      deadStatus: 0,
-      chat: '',
-      profile: '',
-      workspace: '',
-      startedAt: 0,
-      pid: 0,
-      active: false,
-      width: 0,
-      height: 0,
-    };
+    return pane.id;
+  }
+
+  /**
+   * Removes follow panes that are of no use: ones off screen (nobody is looking at them and they
+   * cost a process), and ones whose chat is not running any more, on screen too, which then gives
+   * way to the placeholder. A pane that was only just started is still on its way to the screen
+   * (it waits in the parking session between being started and being swapped in), so it is given a
+   * moment before it counts as off screen.
+   */
+  async function reapStaleFollows(panes: PaneInfo[]): Promise<void> {
+    const running = new Set(
+      panes.filter((pane) => pane.role === 'chat' && !pane.dead).map((pane) => pane.chat),
+    );
+
+    for (const pane of panes) {
+      const orphaned = !running.has(chatOfFollow(pane.follow));
+      const left = pane.session === PARKING_SESSION && now() - pane.startedAt > FOLLOW_GRACE_MS;
+
+      if (pane.role === 'follow' && (orphaned || left)) await discardPane(pane, panes);
+    }
   }
 
   /** Ends a pane's process and removes it, putting the placeholder on screen if it was there. */
   async function discardPane(pane: PaneInfo, panes: PaneInfo[]): Promise<void> {
     if (pane.session === MAIN_SESSION) {
-      await tmux.run(['swap-pane', '-d', '-s', (await placeholderPane(panes)).id, '-t', pane.id]);
+      const spare = await findOrParkPlaceholder({ tmux, panes, placeholder });
+
+      await tmux.run(['swap-pane', '-d', '-s', spare.id, '-t', pane.id]);
     }
 
     await tmux.run(['kill-pane', '-t', pane.id]);
@@ -386,6 +409,8 @@ export function createSession(params: {
     ensure,
     openChat,
     showPane,
+    openFollow,
+    reapStaleFollows,
     redraw,
     syncParkedSizes,
     stopChat,

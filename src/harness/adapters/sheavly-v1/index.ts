@@ -1,8 +1,15 @@
 import os from 'node:os';
 import path from 'node:path';
 import type { AdapterDefinition, HarnessAdapter, StoredChat } from '../../adapter.types.ts';
+import {
+  newChildrenState,
+  runningChildren,
+  updateChildren,
+  type ChildrenState,
+} from './children.ts';
 import { claimNewChats } from './claim.ts';
 import { updateEdits } from './edits.ts';
+import { followChild } from './follow.ts';
 import { defaultCommand, parseLaunchMode } from './launch-command.utils.ts';
 import { recapChat } from './replay.ts';
 import { chromeRows, clearPromptKeys, promptText } from './screen.ts';
@@ -66,6 +73,8 @@ export function createSheavlyV1(options: SheavlyV1Options): HarnessAdapter {
   // The conversation folders of the last listing: where each chat's files are is this adapter's
   // business, so the rest of the manager only holds ids.
   const dirs = new Map<string, string>();
+  // What each chat's stream has said so far, so a look reads only what was added since.
+  const childStates = new Map<string, ChildrenState>();
 
   function dirOf(chat: { id: string }): string {
     const dir = dirs.get(chat.id);
@@ -89,6 +98,10 @@ export function createSheavlyV1(options: SheavlyV1Options): HarnessAdapter {
       dirs.clear();
 
       for (const chat of listing.chats) dirs.set(chat.id, chat.dir);
+
+      for (const id of childStates.keys()) {
+        if (!dirs.has(id)) childStates.delete(id);
+      }
 
       return {
         chats: listing.chats.map(publicChat),
@@ -125,6 +138,21 @@ export function createSheavlyV1(options: SheavlyV1Options): HarnessAdapter {
     chromeRows,
     promptText,
     clearPromptKeys,
+
+    children: {
+      async list(chat, since) {
+        const state = childStates.get(chat.id) ?? newChildrenState();
+
+        childStates.set(chat.id, state);
+        await updateChildren({ dir: dirOf(chat), state });
+
+        return runningChildren({ state, since });
+      },
+
+      async follow({ chat, childId, columns, write, signal }) {
+        await followChild({ dir: dirOf(chat), childId, columns, write, signal });
+      },
+    },
 
     edits: {
       async update(chat, state) {

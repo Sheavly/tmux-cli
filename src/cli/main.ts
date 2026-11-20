@@ -8,6 +8,7 @@ import { describeKeys } from './keys-command.ts';
 import {
   copyCommand,
   escapeCommand,
+  followCommand,
   linesCommand,
   loaderCommand,
   recapCommand,
@@ -65,6 +66,7 @@ function createContext(params: { config: Config; args: string[]; yes: boolean })
     ...(adapter.promptText && adapter.clearPromptKeys ? { escapeCommand: escapeCommand() } : {}),
     loaderCommand: loaderCommand(),
     ...(adapter.recap ? { recapCommand: recapCommand() } : {}),
+    ...(adapter.children ? { followCommand: followCommand() } : {}),
   });
 
   return { config, tmux, adapter, session, args, yes };

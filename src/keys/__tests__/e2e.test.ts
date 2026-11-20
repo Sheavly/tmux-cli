@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { after, before, test } from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { hasTmux, tmuxOptions as options, wait } from '../../testing/tmux.fake.ts';
+import { hasTmux, tmuxOptions as options, until, wait } from '../../testing/tmux.fake.ts';
 import { createTmux } from '../../tmux/tmux.ts';
 
 /**
@@ -76,16 +76,6 @@ const screen = (pane: string) => tmux.run(['capture-pane', '-p', '-e', '-t', pan
 const plain = async (pane: string) => (await screen(pane)).replace(/\u001b\[[0-9;?]*[a-zA-Z]/g, '');
 const type = (pane: string, text: string) => tmux.run(['send-keys', '-t', pane, '-l', text]);
 const press = (pane: string, key: string) => tmux.run(['send-keys', '-t', pane, key]);
-
-async function until(check: () => Promise<boolean>, what: string): Promise<void> {
-  for (let attempt = 0; attempt < 100; attempt++) {
-    if (await check()) return;
-
-    await wait(100);
-  }
-
-  throw new Error(`timed out waiting for ${what}`);
-}
 
 const shows = (pane: string, text: string) =>
   until(async () => (await plain(pane)).includes(text), text);

@@ -1,4 +1,5 @@
-import type { StoredChat } from '../harness/adapter.types.ts';
+import type { ChatChild, StoredChat } from '../harness/adapter.types.ts';
+import { followKey } from '../session/follow-panes.ts';
 import { MAIN_SESSION, type PaneInfo } from '../session/panes.ts';
 
 export type ChatState = 'shown' | 'running' | 'ended' | 'starting' | 'stored';
@@ -20,10 +21,27 @@ export type Row =
       /** When it last changed: shown as its age. */
       updatedAt: number;
     }
+  | {
+      /** A sub-agent or background command of the chat above it, which is running. */
+      kind: 'child';
+      key: string;
+      /** The chat's folder, so a new chat can be started from this row too. */
+      workspace: string;
+      chatId: string;
+      childId: string;
+      childKind: ChatChild['kind'];
+      name: string;
+      /** 1 under the chat, 2 under a sub-agent of it, and so on. */
+      depth: number;
+      /** Whether what it writes is the pane on screen. */
+      shown: boolean;
+    }
   | { kind: 'more'; key: string; workspace: string; hidden: number };
 
 export type BuildInput = {
   chats: StoredChat[];
+  /** The running children of each chat, by conversation id; a chat that is not running has none. */
+  children?: ReadonlyMap<string, readonly ChatChild[]>;
   labels: ReadonlyMap<string, string>;
   panes: PaneInfo[];
   collapsed: ReadonlySet<string>;
@@ -121,9 +139,45 @@ function workspaceRows(params: { input: BuildInput; workspace: string; chats: Ch
 
   return [
     header,
-    ...[...active, ...shownStored].toSorted((a, b) => b.startedAt - a.startedAt),
+    ...[...active, ...shownStored]
+      .toSorted((a, b) => b.startedAt - a.startedAt)
+      .flatMap((chat) => [chat, ...childRows({ chat, input })]),
     ...more,
   ];
+}
+
+/**
+ * The rows under a chat: its running children, each under the one it runs under. A chat that is
+ * not running (stored, or one whose process ended however it did) has none, whatever the list of
+ * children still says: that list is read a moment after the chat changes.
+ */
+function childRows(params: { chat: ChatRow; input: BuildInput }): Row[] {
+  const { chat, input } = params;
+  const depths = new Map<string, number>();
+
+  if (chat.state !== 'shown' && chat.state !== 'running') return [];
+
+  return (input.children?.get(chat.chatId) ?? []).map((child) => {
+    // Parents come before their children, so a parent's depth is known by the time it is asked for.
+    const depth = (child.parentId === undefined ? 0 : (depths.get(child.parentId) ?? 0)) + 1;
+    const key = followKey({ chatId: chat.chatId, childId: child.id });
+
+    depths.set(child.id, depth);
+
+    return {
+      kind: 'child',
+      key: `k:${key}`,
+      workspace: chat.workspace,
+      chatId: chat.chatId,
+      childId: child.id,
+      childKind: child.kind,
+      name: child.name,
+      depth,
+      shown: input.panes.some(
+        (pane) => pane.role === 'follow' && pane.session === MAIN_SESSION && pane.follow === key,
+      ),
+    };
+  });
 }
 
 export function relativeTime(params: { now: number; then: number }): string {

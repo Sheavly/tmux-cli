@@ -16,3 +16,14 @@ export const tmuxOptions = { skip: !hasTmux && 'tmux is not installed' };
 
 export const wait = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
+
+/** Polls `check` for up to ten seconds and says what it was waiting for when it never came true. */
+export async function until(check: () => Promise<boolean>, what: string): Promise<void> {
+  for (let attempt = 0; attempt < 100; attempt++) {
+    if (await check()) return;
+
+    await wait(100);
+  }
+
+  throw new Error(`timed out waiting for ${what}`);
+}

@@ -28,6 +28,7 @@ export function rows(ctx: SidebarContext): Row[] {
 
   return buildRows({
     chats: chatsOnProfile(state.chats, state.activeProfile),
+    children: state.children,
     labels: new Map([...state.labels, ...state.names]),
     panes: panesOnProfile(state.panes, state.activeProfile),
     collapsed: state.collapsed,
@@ -92,6 +93,17 @@ async function activate(ctx: SidebarContext): Promise<void> {
     return;
   }
 
+  if (row.kind === 'child') {
+    await session.openFollow({
+      chatId: row.chatId,
+      childId: row.childId,
+      workspace: row.workspace,
+    });
+    state.cursorKey = row.key;
+
+    return;
+  }
+
   if (row.paneId && !row.chatId) {
     await session.showPane(row.paneId);
   } else {
@@ -109,10 +121,15 @@ async function activate(ctx: SidebarContext): Promise<void> {
   state.cursorKey = row.key;
 }
 
-/** Puts the cursor on the chat that is on screen, opening its folder if it was collapsed. */
+/** Whether the row is what the pane on screen shows: a chat, or one of its children. */
+function isShown(row: Row): boolean {
+  return (row.kind === 'chat' && row.state === 'shown') || (row.kind === 'child' && row.shown);
+}
+
+/** Puts the cursor on the chat (or child of one) that is on screen, opening its folder if it was collapsed. */
 function selectActive(ctx: SidebarContext): void {
   const { state } = ctx;
-  const active = rows(ctx).find((row) => row.kind === 'chat' && row.state === 'shown');
+  const active = rows(ctx).find(isShown);
 
   if (active) {
     state.cursorKey = active.key;
@@ -121,7 +138,7 @@ function selectActive(ctx: SidebarContext): void {
   }
 
   const onScreen = state.panes.find(
-    (pane) => pane.session === MAIN_SESSION && pane.role === 'chat',
+    (pane) => pane.session === MAIN_SESSION && (pane.role === 'chat' || pane.role === 'follow'),
   );
 
   if (!onScreen) {
@@ -133,9 +150,7 @@ function selectActive(ctx: SidebarContext): void {
   // Its folder is collapsed, so there is no row for it yet.
   state.collapsed.delete(onScreen.workspace);
 
-  const row = rows(ctx).find(
-    (candidate) => candidate.kind === 'chat' && candidate.state === 'shown',
-  );
+  const row = rows(ctx).find(isShown);
 
   if (row) state.cursorKey = row.key;
 }

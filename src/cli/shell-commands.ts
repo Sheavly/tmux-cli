@@ -45,6 +45,11 @@ export function recapCommand(): string {
   return cliCommand('recap');
 }
 
+/** The shell command that shows what a child of a chat writes; the conversation id and the child's are added to it. */
+export function followCommand(): string {
+  return cliCommand('follow');
+}
+
 /** The shell command that draws a spinner in its pane until the chat starting there has written. */
 export function loaderCommand(): string {
   return cliCommand('loader');

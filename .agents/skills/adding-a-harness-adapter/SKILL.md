@@ -38,6 +38,7 @@ Leave a member out and the feature goes quietly, with its key gone from the help
 | `listProfiles`                         | no profiles: the list isn't split, `p` says so              |
 | `edits`                                | no files list (`f`)                                         |
 | `deleteChat`                           | no deleting (`Del`)                                         |
+| `children` (`list` and `follow`)       | no sub-agents or commands under a running chat              |
 | `recap`                                | nothing printed above a reopened chat                       |
 | `chromeRows`                           | the numbered lines count the program's own controls too     |
 | `promptText` **and** `clearPromptKeys` | `Esc` twice does not clear the prompt (the key isn't bound) |

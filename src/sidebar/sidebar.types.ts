@@ -1,5 +1,6 @@
 import type { Group, Grouping } from '../files/commits.ts';
 import type {
+  ChatChild,
   EditedFile,
   EditState,
   HarnessAdapter,
@@ -78,6 +79,8 @@ export type SidebarState = {
   /** What each chat's edits looked like at the last look, by chat id. */
   trackers: Map<string, EditState>;
   chats: StoredChat[];
+  /** The running sub-agents and background commands of each running chat, by conversation id. */
+  children: Map<string, ChatChild[]>;
   panes: PaneInfo[];
   /** The harness's profiles; empty without profiles. */
   profiles: ProfileInfo[];

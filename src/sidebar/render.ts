@@ -226,7 +226,31 @@ function renderRow(params: { row: Row; screen: Screen; selected: boolean }): str
     return `${style.dim}${padRight(`   … ${row.hidden} older (a: all)`, width)}${style.reset}`;
   }
 
+  if (row.kind === 'child') return renderChild({ row, width });
+
   return renderChat({ row, screen, selected });
+}
+
+/** What each kind of child is marked with, at the start of its row. */
+const CHILD_SYMBOLS = { agent: '◆', process: '▸', service: '∞' } as const;
+
+/**
+ * A running sub-agent or background command, under its chat and indented one step more for each
+ * level it is nested. Its colours end with codes that undo only themselves, so a selected row
+ * stays reversed to its end.
+ */
+function renderChild(params: { row: Extract<Row, { kind: 'child' }>; width: number }): string {
+  const { row, width } = params;
+  const indent = ' '.repeat(2 + row.depth * 2);
+  const room = Math.max(1, width - indent.length - 3);
+  const name = padRight(truncate(row.name, room), room);
+  const symbol = CHILD_SYMBOLS[row.childKind];
+
+  if (row.shown) {
+    return `${indent}${style.green}${style.bold}${symbol} ${name}${ESC}39m${ESC}22m `;
+  }
+
+  return `${indent}${style.lit}${symbol}${ESC}39m ${name} `;
 }
 
 function isOnScreen(row: Row): boolean {

@@ -1,23 +1,12 @@
-import type { FileHandle } from 'node:fs/promises';
 import path from 'node:path';
 import type { EditKind, EditState } from '../../adapter.types.ts';
-import { openIfExists } from './open-file.ts';
+import { newCursor, readAppended, type Cursor } from './incremental-lines.ts';
 
 /** The tools that change a file, and what each one does to it. */
 const EDIT_TOOLS: Record<string, EditKind> = {
   edit_file: 'edited',
   write_file: 'written',
   delete_file: 'deleted',
-};
-
-const READ_CHUNK_BYTES = 1024 * 1024;
-
-/** Where reading a chat's history got to, so each look reads only what was added since. */
-type Cursor = {
-  /** Bytes of the history file read so far. */
-  offset: number;
-  /** The end of the last read, which is a line that isn't complete yet. */
-  carry: Buffer;
 };
 
 /** One line of a chat's history, as far as the file changes in it are concerned. */
@@ -27,7 +16,7 @@ type HistoryRecord = {
 };
 
 function cursorOf(state: EditState): Cursor {
-  const cursor = (state.cursor as Cursor | undefined) ?? { offset: 0, carry: Buffer.alloc(0) };
+  const cursor = (state.cursor as Cursor | undefined) ?? newCursor();
 
   state.cursor = cursor;
 
@@ -78,63 +67,23 @@ export async function updateEdits(params: {
   state: EditState;
 }): Promise<boolean> {
   const { dir, workspace, state } = params;
-  const cursor = cursorOf(state);
-  const handle = await openIfExists(path.join(dir, 'history.jsonl'));
+  const appended = await readAppended({
+    file: path.join(dir, 'history.jsonl'),
+    cursor: cursorOf(state),
+  });
 
-  if (!handle) return false;
+  if (!appended) return false;
 
-  let changed = false;
+  if (appended.restarted) state.files.clear();
 
-  try {
-    const { size } = await handle.stat();
+  let changed = appended.restarted;
 
-    if (size < cursor.offset) {
-      cursor.offset = 0;
-      cursor.carry = Buffer.alloc(0);
-      state.files.clear();
-      changed = true;
-    }
-
-    while (cursor.offset < size) {
-      const lines = await readNewLines({ handle, cursor, size });
-
-      if (lines === undefined) break;
-
-      for (const change of lines.flatMap((line) => parseEditLine(line))) {
-        fold({ state, workspace, change });
-        changed = true;
-      }
-    }
-  } finally {
-    await handle.close();
+  for (const change of appended.lines.flatMap((line) => parseEditLine(line))) {
+    fold({ state, workspace, change });
+    changed = true;
   }
 
   return changed;
-}
-
-/**
- * Reads the next chunk and gives the lines it completed; the end of it that is not a whole line
- * yet is kept in the cursor for the next read. Nothing when the file ended sooner than its size said.
- */
-async function readNewLines(params: {
-  handle: FileHandle;
-  cursor: Cursor;
-  size: number;
-}): Promise<string[] | undefined> {
-  const { handle, cursor, size } = params;
-  const buffer = Buffer.alloc(Math.min(READ_CHUNK_BYTES, size - cursor.offset));
-  const { bytesRead } = await handle.read(buffer, 0, buffer.length, cursor.offset);
-
-  if (bytesRead === 0) return undefined;
-
-  cursor.offset += bytesRead;
-
-  const data = Buffer.concat([cursor.carry, buffer.subarray(0, bytesRead)]);
-  const end = data.lastIndexOf(0x0a);
-
-  cursor.carry = end === -1 ? data : data.subarray(end + 1);
-
-  return end === -1 ? [] : data.subarray(0, end).toString('utf8').split('\n');
 }
 
 function fold(params: {

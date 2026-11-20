@@ -1,5 +1,6 @@
 import { copyAtNewest, runLines } from '../chat-lines/lines.ts';
 import { runEscape } from '../escape/escape.ts';
+import { runFollow } from '../follow/follow.ts';
 import { runLoader } from '../loader/loader.ts';
 import { recapText } from '../recap/recap.ts';
 import { MAIN_SESSION } from '../session/panes.ts';
@@ -31,6 +32,17 @@ async function recap(context: CliContext): Promise<void> {
 
     console.error(`(no recap: ${reason})`);
   }
+}
+
+/** The pane of a child of a chat: both ids are checked before the adapter sees them. */
+async function follow(context: CliContext): Promise<void> {
+  const [chatId, childId] = context.args;
+
+  if (!chatId || !childId || !context.adapter.isChatId(chatId)) {
+    throw new Error('Usage: sheavly-tmux follow <conversation id> <child id>');
+  }
+
+  await runFollow({ adapter: context.adapter, chatId, childId });
 }
 
 /** Best effort, in the background of a starting chat: it must never get in the chat's way. */
@@ -97,11 +109,12 @@ async function stop(context: CliContext): Promise<void> {
 
 /**
  * The commands that do one thing and leave: `stop`, and the ones tmux runs for our keys and panes
- * (`sidebar`, `lines`, `copy`, `escape`, `view`, `recap`, `loader`). A map, so a name that is no
+ * (`sidebar`, `lines`, `copy`, `escape`, `view`, `recap`, `follow`, `loader`). A map, so a name that is no
  * command (`constructor`) is none.
  */
 export const HELPER_COMMANDS: ReadonlyMap<string, Command> = new Map<string, Command>([
   ['recap', recap],
+  ['follow', follow],
   ['loader', loader],
   ['sidebar', sidebar],
   ['lines', lines],

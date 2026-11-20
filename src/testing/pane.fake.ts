@@ -6,6 +6,7 @@ export function fakePane(over: Partial<PaneInfo> = {}): PaneInfo {
     id: '%1',
     session: 'sheavly-parked',
     role: 'chat',
+    follow: '',
     dead: false,
     deadStatus: 0,
     chat: '',

@@ -20,6 +20,7 @@ function initialState(): SidebarState {
   return {
     trackers: new Map(),
     chats: [],
+    children: new Map(),
     panes: [],
     profiles: [],
     activeProfile: '',
