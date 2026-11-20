@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { DEFAULT_ADAPTER } from '../harness/index.ts';
+import { ADAPTER_SETTING_KEYS, DEFAULT_ADAPTER } from '../harness/index.ts';
 import { parseJsonObject } from './json-file.ts';
 import { MOUSE_ALL, parseMouseSettings, type MouseSettings } from './mouse-settings.ts';
 import {
@@ -51,10 +51,9 @@ export type Config = {
   socket: string;
 };
 
-const ADAPTER_KEYS = ['harnessDir', 'command', 'mode'] as const;
 const FILE_KEYS = [
   'adapter',
-  ...ADAPTER_KEYS,
+  ...ADAPTER_SETTING_KEYS,
   'sidebarWidth',
   'chatOrder',
   'escapeTime',
@@ -91,13 +90,7 @@ export function loadConfig(
     keyWarnings: warnings,
     acceptUnboundKeys: file.acceptUnboundKeys ?? false,
     adapter: file.adapter ?? DEFAULT_ADAPTER,
-    adapterSettings: Object.fromEntries(
-      ADAPTER_KEYS.flatMap((key) => {
-        const value = file[key];
-
-        return value === undefined ? [] : [[key, value] as const];
-      }),
-    ),
+    adapterSettings: file.adapterSettings ?? {},
     sidebarWidth: file.sidebarWidth ?? 34,
     chatOrder: file.chatOrder ?? 'prompted',
     escapeTime: file.escapeTime,
@@ -113,9 +106,7 @@ function defaultReadFile(file: string): string {
 
 type FileConfig = {
   adapter?: string;
-  harnessDir?: string;
-  mode?: string;
-  command?: string;
+  adapterSettings?: Record<string, string>;
   sidebarWidth?: number;
   chatOrder?: ChatOrder;
   escapeTime?: number;
@@ -152,9 +143,7 @@ function parseConfigFile(params: { file: string; text: string }): FileConfig {
 
   return {
     ...stringField({ file, record, key: 'adapter' }),
-    ...stringField({ file, record, key: 'harnessDir' }),
-    ...stringField({ file, record, key: 'command' }),
-    ...stringField({ file, record, key: 'mode' }),
+    ...parseAdapterSettings({ file, record }),
     ...stringField({ file, record, key: 'socket' }),
     ...numberField({ file, record, key: 'sidebarWidth', min: 16, max: 120 }),
     ...optionalField({
@@ -188,6 +177,20 @@ function optionalField(
   if (!accepts(value)) throw new Error(`${file}: "${key}" must be ${wanted}`);
 
   return { [key]: value };
+}
+
+/** The keys some adapter reads, kept as they are: only the adapter knows what they mean. */
+function parseAdapterSettings(
+  params: Omit<FieldParams, 'key'>,
+): Pick<FileConfig, 'adapterSettings'> {
+  const { file, record } = params;
+  const settings: Record<string, string> = {};
+
+  for (const key of ADAPTER_SETTING_KEYS) {
+    Object.assign(settings, stringField({ file, record, key }));
+  }
+
+  return Object.keys(settings).length === 0 ? {} : { adapterSettings: settings };
 }
 
 const booleanField = (params: FieldParams) =>

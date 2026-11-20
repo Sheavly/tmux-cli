@@ -8,6 +8,11 @@ const ADAPTER_NAMES: readonly string[] = DEFINITIONS.map((definition) => definit
 
 export const DEFAULT_ADAPTER = SHEAVLY_V1;
 
+/** Every config-file key some adapter reads: what the config loader accepts besides its own. */
+export const ADAPTER_SETTING_KEYS: readonly string[] = [
+  ...new Set(DEFINITIONS.flatMap((definition) => definition.settingKeys)),
+];
+
 /**
  * The adapter the config names. `settings` is the adapter-specific part of the config file; each
  * adapter reads the keys it knows and (with the environment) fills in the rest.
@@ -23,6 +28,14 @@ export function createAdapter(params: {
 
   if (!definition) {
     throw new Error(`Unknown adapter "${name}" (known: ${ADAPTER_NAMES.join(', ')})`);
+  }
+
+  const foreignKey = Object.keys(rest.settings).find(
+    (key) => !definition.settingKeys.includes(key),
+  );
+
+  if (foreignKey) {
+    throw new Error(`Setting "${foreignKey}" is not read by the "${name}" adapter`);
   }
 
   return definition.create(rest);

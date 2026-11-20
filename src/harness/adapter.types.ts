@@ -171,6 +171,11 @@ export type HarnessAdapter = {
 /** How the registry builds an adapter: the config's adapter-specific `settings`, plus the environment. */
 export type AdapterDefinition = {
   name: string;
+  /**
+   * The keys of the config file this adapter reads into `settings`. The config loader accepts
+   * exactly the keys of the registered adapters, so an adapter never edits the loader.
+   */
+  settingKeys: readonly string[];
   create: (params: {
     settings: Record<string, unknown>;
     env?: NodeJS.ProcessEnv;

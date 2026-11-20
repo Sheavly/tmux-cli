@@ -10,14 +10,17 @@ export type FollowTarget = {
   workspace: string;
 };
 
-/** How a follow pane says what it follows, in its `@sheavly_follow` tag. */
+/**
+ * How a follow pane says what it follows, in its `@sheavly_follow` tag. Each id is escaped, so
+ * whatever characters a harness puts in its ids, the first colon is the one between the two.
+ */
 export function followKey(target: Pick<FollowTarget, 'chatId' | 'childId'>): string {
-  return `${target.chatId}:${target.childId}`;
+  return `${encodeURIComponent(target.chatId)}:${encodeURIComponent(target.childId)}`;
 }
 
-/** The conversation a follow pane's tag names: its id is a UUID, so it ends at the first colon. */
+/** The conversation a follow pane's tag names. */
 export function chatOfFollow(follow: string): string {
-  return follow.split(':')[0] ?? '';
+  return decodeURIComponent(follow.split(':')[0] ?? '');
 }
 
 /**

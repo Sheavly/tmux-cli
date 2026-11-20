@@ -29,6 +29,7 @@ export const SHEAVLY_V1 = 'sheavly-v1';
 /** What the registry knows this adapter by; it reads its own keys out of the config settings. */
 export const sheavlyV1: AdapterDefinition = {
   name: SHEAVLY_V1,
+  settingKeys: ['harnessDir', 'command', 'mode'],
   create: ({ settings, env, home }) =>
     createSheavlyV1(
       resolveSheavlyV1Options({
