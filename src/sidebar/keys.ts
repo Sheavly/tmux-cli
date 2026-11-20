@@ -1,4 +1,9 @@
-import { parseMouseReport, SPLIT_AT_REPORTS, type MouseEvent } from '../terminal/mouse.utils.ts';
+import {
+  parseMouseReport,
+  SPLIT_AT_REPORTS,
+  type MouseEvent,
+  type MouseReading,
+} from '../terminal/mouse.utils.ts';
 
 /**
  * A key as a terminal program reads it: a character, or a name such as `up`, `enter`, `escape`,
@@ -29,11 +34,11 @@ export type Input = { kind: 'key'; key: Key } | { kind: 'mouse'; mouse: MouseEve
  * Splits one read into keys and mouse events, in the order they came. A mouse report that is not
  * of use (a release, a move) is dropped like any sequence we don't know.
  */
-export function parseInput(data: string): Input[] {
+export function parseInput(data: string, reading: MouseReading = {}): Input[] {
   return data.split(SPLIT_AT_REPORTS).flatMap((part, index): Input[] => {
     if (index % 2 === 0) return parseKeys(part).map((key) => ({ kind: 'key', key }));
 
-    const mouse = parseMouseReport(part);
+    const mouse = parseMouseReport(part, reading);
 
     return mouse ? [{ kind: 'mouse', mouse }] : [];
   });

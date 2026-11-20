@@ -326,6 +326,9 @@ export const screenCodes = {
   // program asks for them, tmux hands it the mouse and the terminal's own selection needs Shift.
   mouseOn: `${ESC}?1000h${ESC}?1006h`,
   mouseOff: `${ESC}?1006l${ESC}?1000l`,
+  // As above, and the mouse moving with the left button held (1002), which is what a selection is.
+  mouseDragOn: `${ESC}?1002h${ESC}?1006h`,
+  mouseDragOff: `${ESC}?1006l${ESC}?1002l`,
 };
 
 export function paint(lines: string[]): string {

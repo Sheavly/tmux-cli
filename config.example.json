@@ -118,7 +118,8 @@
       "panLeft": ["Left", "h"],
       "panRight": ["Right", "l"],
       "nextChange": "n",
-      "previousChange": "p"
+      "previousChange": "p",
+      "copyMode": "M-c"
     }
   }
 }

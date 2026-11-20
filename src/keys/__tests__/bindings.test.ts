@@ -167,6 +167,7 @@ test('the help screen, the questions, the popup and the viewer keep their keys',
     l: 'viewer.panRight',
     n: 'viewer.nextChange',
     p: 'viewer.previousChange',
+    'M-c': 'viewer.copyMode',
   };
 
   for (const [key, action] of Object.entries(viewer)) {

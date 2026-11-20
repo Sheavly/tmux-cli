@@ -285,6 +285,12 @@ export const ACTIONS = [
   { id: 'viewer.panRight', keys: ['Right', 'l'], modes: ['viewer'], description: 'pan right' },
   { id: 'viewer.nextChange', keys: ['n'], modes: ['viewer'], description: 'next change' },
   { id: 'viewer.previousChange', keys: ['p'], modes: ['viewer'], description: 'previous change' },
+  {
+    id: 'viewer.copyMode',
+    keys: ['M-c'],
+    modes: ['viewer'],
+    description: 'copy mode: select with the keyboard',
+  },
 ] as const satisfies readonly ActionDef[];
 
 export type ActionId = (typeof ACTIONS)[number]['id'];

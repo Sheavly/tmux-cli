@@ -6,11 +6,13 @@ import { fromTerminal } from '../keys/key.ts';
 import type { ActionId } from '../keys/registry.ts';
 import { wheelRows, type MouseEvent } from '../terminal/mouse.utils.ts';
 import { fitColumns } from '../terminal/width.utils.ts';
+import type { Tmux } from '../tmux/tmux.ts';
 import { startFullScreen } from '../sidebar/full-screen.ts';
 import { hintKey } from '../sidebar/help.ts';
 import type { Key } from '../sidebar/keys.ts';
 import { paint, screenCodes, shortPath, truncate } from '../sidebar/render.ts';
-import { changeStarts, type ViewRow } from './diff.ts';
+import { copyToClipboard } from './clipboard.ts';
+import { changeStarts } from './diff.ts';
 import { loadFile } from './file-load.ts';
 import {
   highlight,
@@ -19,13 +21,19 @@ import {
   MAX_HIGHLIGHT_LINES,
   type Piece,
 } from './highlight.ts';
-import { plainSlice, style, styledSlice, tint, tintsFor } from './row-render.ts';
+import { renderRow, style } from './row-render.ts';
+import type { Position } from './selection.utils.ts';
+import { createSelecting } from './selecting.ts';
 
 const PAN_STEP = 8;
 
-/** A read-only view of one file with its uncommitted changes marked; Esc closes it. */
+/**
+ * A read-only view of one file with its uncommitted changes marked; Esc closes it. Text is
+ * selected with the mouse or in a copy mode, and copied through `tmux`, as in a chat.
+ */
 export async function runViewer(params: {
   file: string;
+  tmux: Tmux;
   /** Which keys do what; the defaults when not given. */
   bindings?: Bindings;
   /** What the mouse may do; all of it when not given. */
@@ -82,38 +90,71 @@ export async function runViewer(params: {
     draw();
   }
 
-  function renderRow(row: ViewRow, width: number): string {
-    const room = Math.max(0, width - numberWidth - 3);
-    const tints = tintsFor(light);
+  // The columns in front of the text of a row: the number, a mark and a space either side of it.
+  const gutter = numberWidth + 3;
+  // What the last copy did, in place of the key help until the next key or click.
+  let notice: string | undefined;
 
-    if (row.kind === 'removed') {
-      const text = plainSlice(row.text, left, room);
+  /** Scrolls and pans as little as it takes to show a cell; the caller draws. */
+  function reveal(position: Position): void {
+    const room = Math.max(1, process.stdout.columns - gutter);
 
-      return tint(
-        `${style.red}${' '.repeat(numberWidth)} - ${fitColumns(text, room)}${style.reset}`,
-        tints.removed,
-      );
+    if (position.row < top) top = position.row;
+    else if (position.row >= top + bodyHeight()) top = position.row - bodyHeight() + 1;
+
+    if (position.column < left) left = position.column;
+    else if (position.column >= left + room) left = position.column - room + 1;
+  }
+
+  async function copyText(text: string): Promise<void> {
+    const count = text.split('\n').length;
+
+    try {
+      await copyToClipboard({ tmux: params.tmux, text });
+      notice = `copied ${count} ${count === 1 ? 'line' : 'lines'}`;
+    } catch (caughtError) {
+      notice = `copy failed: ${(caughtError as Error).message}`;
     }
 
-    const pieces = colored?.[row.number - 1];
-    const body = pieces
-      ? styledSlice({ pieces, left, room })
-      : fitColumns(plainSlice(row.text, left, room), room);
-    const number = String(row.number).padStart(numberWidth);
-
-    if (row.added) return tint(`${style.green}${number} +${style.reset} ${body}`, tints.added);
-
-    return `${style.dim}${number}${style.reset}   ${body}`;
+    draw();
   }
+
+  const selecting = createSelecting({
+    rows,
+    bindings,
+    view: {
+      top: () => top,
+      left: () => left,
+      bodyHeight,
+      gutter,
+      reveal,
+      scroll: (delta) => {
+        scroll(delta);
+      },
+    },
+    copy: copyText,
+    redraw: () => {
+      draw();
+    },
+  });
 
   /** What the footer says the keys do; a key that is not bound is left out. */
   function helpText(): string {
-    return [
-      [`${hint('viewer.scrollUp')}${hint('viewer.scrollDown')}`, 'scroll'],
-      [`${hint('viewer.panLeft')}${hint('viewer.panRight')}`, 'pan'],
-      [`${hint('viewer.nextChange')}/${hint('viewer.previousChange')}`, 'change'],
-      [hint('viewer.close'), 'close'],
-    ]
+    const hints = selecting.inCopyMode()
+      ? [
+          [hint('copyMode.copy'), 'copy'],
+          [hint('copyMode.escape'), 'drop selection, then leave'],
+          [hint('copyMode.quit'), 'leave'],
+        ]
+      : [
+          [`${hint('viewer.scrollUp')}${hint('viewer.scrollDown')}`, 'scroll'],
+          [`${hint('viewer.panLeft')}${hint('viewer.panRight')}`, 'pan'],
+          [`${hint('viewer.nextChange')}/${hint('viewer.previousChange')}`, 'change'],
+          [hint('viewer.copyMode'), 'copy mode'],
+          [hint('viewer.close'), 'close'],
+        ];
+
+    return hints
       .filter(([keys]) => keys !== '' && keys !== '/')
       .map(([keys, text]) => `${keys} ${text}`)
       .join('  ');
@@ -126,13 +167,22 @@ export async function runViewer(params: {
       ` ${shortPath({ path: file, home: os.homedir(), max: width - stats.length - 6 })}  ${stats}`,
       width,
     );
-    const body = rows.slice(top, top + bodyHeight()).map((row) => renderRow(row, width));
+    const body = rows.slice(top, top + bodyHeight()).map((row, offset) =>
+      renderRow(row, {
+        width,
+        numberWidth,
+        left,
+        light,
+        colored,
+        selected: selecting.spanOn(top + offset),
+      }),
+    );
     const filler = Array.from({ length: Math.max(0, bodyHeight() - body.length) }, () =>
       ' '.repeat(width),
     );
     const position = rows.length === 0 ? '' : `${Math.min(top + 1, rows.length)}/${rows.length}`;
     const footer = fitColumns(
-      truncate(` ${helpText()}`, Math.max(0, width - position.length - 1)),
+      truncate(` ${notice ?? helpText()}`, Math.max(0, width - position.length - 1)),
       width - position.length - 1,
     );
     const message = rows.length === 0 ? fitColumns(` ${loaded.note}`, width) : undefined;
@@ -180,17 +230,39 @@ export async function runViewer(params: {
     'viewer.previousChange': () => {
       jump(-1);
     },
+    // With our copy mode keys turned off there would be no way to copy or to leave it.
+    'viewer.copyMode': () => {
+      if (bindings.copyMode) selecting.enterCopyMode();
+    },
   };
 
-  function handleKey(key: Key): void {
-    const action = bindings.action('viewer', fromTerminal(key) ?? '');
+  async function handleKey(key: Key): Promise<void> {
+    const name = fromTerminal(key) ?? '';
+
+    notice = undefined;
+
+    if (await selecting.key(name)) return;
+
+    const action = bindings.action('viewer', name);
 
     if (action) actions[action]?.();
   }
 
+  async function handleMouse(event: MouseEvent): Promise<void> {
+    notice = undefined;
+
+    if (event.kind === 'wheelUp' || event.kind === 'wheelDown') {
+      if (mouse.scroll) wheel(event);
+
+      return;
+    }
+
+    if (mouse.copy) await selecting.mouse(event);
+  }
+
   startFullScreen({
     onKey: handleKey,
-    ...(mouse.scroll ? { onMouse: (event: MouseEvent) => wheel(event) } : {}),
+    ...(mouse.scroll || mouse.copy ? { onMouse: handleMouse, drag: mouse.copy } : {}),
     onResize: () => {
       process.stdout.write(screenCodes.clear);
       draw();

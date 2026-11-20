@@ -9,29 +9,33 @@ import { screenCodes } from './render.ts';
  * Drawing, and what to do when the size changes, are the program's own.
  *
  * With `onMouse` the program also asks the terminal for the mouse, and its events are handled in
- * the same order as the keys. Without it the mouse is not asked for, so tmux keeps it.
+ * the same order as the keys. Without it the mouse is not asked for, so tmux keeps it. With `drag`
+ * it is also told when the left button is held while the mouse moves, and when it is let go.
  */
 export function startFullScreen(params: {
   onKey: (key: Key) => Promise<void> | void;
   onResize: () => void;
   onMouse?: (mouse: MouseEvent) => Promise<void> | void;
+  drag?: boolean;
 }): void {
-  const { onKey, onResize, onMouse } = params;
+  const { onKey, onResize, onMouse, drag = false } = params;
+  const on = drag ? screenCodes.mouseDragOn : screenCodes.mouseOn;
+  const off = drag ? screenCodes.mouseDragOff : screenCodes.mouseOff;
   let queue = Promise.resolve();
 
   process.stdin.setRawMode(true);
   process.stdin.setEncoding('utf8');
   process.stdin.on('data', (data: string) => {
-    for (const input of parseInput(data)) {
+    for (const input of parseInput(data, { drag })) {
       if (input.kind === 'key') queue = queue.then(() => onKey(input.key));
       else if (onMouse) queue = queue.then(() => onMouse(input.mouse));
     }
   });
   process.stdout.on('resize', onResize);
   process.once('exit', () => {
-    process.stdout.write((onMouse ? screenCodes.mouseOff : '') + screenCodes.leave);
+    process.stdout.write((onMouse ? off : '') + screenCodes.leave);
   });
   process.once('SIGTERM', () => process.exit(0));
   process.once('SIGHUP', () => process.exit(0));
-  process.stdout.write(screenCodes.enter + (onMouse ? screenCodes.mouseOn : ''));
+  process.stdout.write(screenCodes.enter + (onMouse ? on : ''));
 }

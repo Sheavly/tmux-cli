@@ -2,8 +2,11 @@ import { execFile } from 'node:child_process';
 
 /** The one door to tmux: tests pass a fake, the app passes `createTmux`. */
 export type Tmux = {
-  /** Runs a tmux command and returns its stdout; rejects with a `TmuxError` when tmux fails. */
-  run: (args: string[]) => Promise<string>;
+  /**
+   * Runs a tmux command and returns its stdout; rejects with a `TmuxError` when tmux fails. The
+   * `input`, when given, is what the command reads on stdin.
+   */
+  run: (args: string[], input?: string) => Promise<string>;
 };
 
 class TmuxError extends Error {
@@ -22,17 +25,24 @@ export function createTmux(params: { socket: string }): Tmux {
   const { socket } = params;
 
   return {
-    run: (args) =>
+    run: (args, input) =>
       new Promise((resolve, reject) => {
-        execFile('tmux', ['-L', socket, ...args], { encoding: 'utf8' }, (error, stdout, stderr) => {
-          if (error) {
-            reject(new TmuxError({ args, stderr: stderr || error.message, cause: error }));
+        const child = execFile(
+          'tmux',
+          ['-L', socket, ...args],
+          { encoding: 'utf8' },
+          (error, stdout, stderr) => {
+            if (error) {
+              reject(new TmuxError({ args, stderr: stderr || error.message, cause: error }));
 
-            return;
-          }
+              return;
+            }
 
-          resolve(stdout);
-        });
+            resolve(stdout);
+          },
+        );
+
+        if (input !== undefined) child.stdin?.end(input);
       }),
   };
 }

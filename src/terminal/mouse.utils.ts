@@ -1,7 +1,18 @@
-/** What a full-screen program does with the mouse: a click, or the wheel turned a notch. */
-export type MouseEvent =
-  | { kind: 'click'; column: number; row: number }
-  | { kind: 'wheelUp' | 'wheelDown'; column: number; row: number };
+/**
+ * What a full-screen program does with the mouse: a click, or the wheel turned a notch. A program
+ * that asked for dragging also gets the left button held while it moves, and let go.
+ */
+export type MouseEvent = {
+  kind: 'click' | 'drag' | 'release' | 'wheelUp' | 'wheelDown';
+  column: number;
+  row: number;
+};
+
+/** Which reports are of use besides clicks and the wheel. */
+export type MouseReading = {
+  /** The left button held while the mouse moves, and let go (the program asked for `?1002h`). */
+  drag?: boolean;
+};
 
 /** How many rows one notch of the wheel moves, as in tmux's own scrolling. */
 const WHEEL_ROWS = 3;
@@ -29,9 +40,13 @@ const BUTTON_BITS = 3;
 
 /**
  * What one report says, with the position counted from 0 at the top left of the pane. Nothing for
- * what is not used: a release, a move, another button, a click with a modifier held.
+ * what is not used: a move, another button, a click with a modifier held, and (unless the program
+ * reads dragging) a release.
  */
-export function parseMouseReport(report: string): MouseEvent | undefined {
+export function parseMouseReport(
+  report: string,
+  reading: MouseReading = {},
+): MouseEvent | undefined {
   const match = REPORT_PARTS.exec(report);
 
   if (!match) return undefined;
@@ -40,7 +55,15 @@ export function parseMouseReport(report: string): MouseEvent | undefined {
   const bits = Number(code);
   const position = { column: Number(column) - 1, row: Number(row) - 1 };
 
-  if (final !== 'M' || bits & MOTION_BIT || bits & MODIFIER_BITS) return undefined;
+  if (bits & MODIFIER_BITS) return undefined;
+
+  if (final === 'm' || bits & MOTION_BIT) {
+    const held = reading.drag && (bits & (WHEEL_BIT | BUTTON_BITS)) === 0;
+
+    if (!held) return undefined;
+
+    return { kind: final === 'm' ? 'release' : 'drag', ...position };
+  }
 
   if (bits & WHEEL_BIT) {
     // Buttons 0 and 1 of the wheel are up and down; 2 and 3 are sideways.

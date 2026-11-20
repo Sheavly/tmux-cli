@@ -101,7 +101,12 @@ async function escape(context: CliContext): Promise<void> {
 async function view(context: CliContext): Promise<void> {
   const file = required({ args: context.args, usage: 'view <file>' });
 
-  await runViewer({ file, bindings: context.config.keys, mouse: context.config.mouse });
+  await runViewer({
+    file,
+    tmux: context.tmux,
+    bindings: context.config.keys,
+    mouse: context.config.mouse,
+  });
 }
 
 async function stop(context: CliContext): Promise<void> {

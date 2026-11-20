@@ -34,6 +34,32 @@ test('a release, a move, another button, a sideways wheel and a click with a mod
   }
 });
 
+test('a program that reads dragging gets the left button held while it moves, and let go', () => {
+  const reading = { drag: true };
+
+  assert.deepEqual(parseMouseReport('\u001b[<32;5;3M', reading), {
+    kind: 'drag',
+    column: 4,
+    row: 2,
+  });
+  assert.deepEqual(parseMouseReport('\u001b[<0;5;3m', reading), {
+    kind: 'release',
+    column: 4,
+    row: 2,
+  });
+});
+
+test('dragging with another button, a move with no button or a modifier held is not used', () => {
+  for (const report of [
+    '\u001b[<34;5;3M',
+    '\u001b[<35;5;3M',
+    '\u001b[<36;5;3M',
+    '\u001b[<2;5;3m',
+  ]) {
+    assert.equal(parseMouseReport(report, { drag: true }), undefined, JSON.stringify(report));
+  }
+});
+
 test('a read with keys and mouse reports in it comes out in the order it came', () => {
   assert.deepEqual(parseInput('j\u001b[<0;4;2M\u001b[<0;4;2m\u001b[Bq'), [
     { kind: 'key', key: 'j' },

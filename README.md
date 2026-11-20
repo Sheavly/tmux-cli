@@ -176,7 +176,8 @@ stop` and a start.
 `mouse` says what the mouse may do; every action is on unless you turn it off, and `"mouse": false`
 turns all of them off. `scroll`: the wheel scrolls the chat's history, the sidebar's list, the
 file viewer and the numbered lines. `copy`: dragging, or double or triple clicking, selects text
-and copies it. `focus`: clicking a pane gives it the keyboard. `sidebar`: a click on a chat in the
+and copies it (in the file viewer, dragging selects and letting go copies; `Alt+c` there is a copy
+mode with the keyboard). `focus`: clicking a pane gives it the keyboard. `sidebar`: a click on a chat in the
 sidebar selects it, and a click on the selected chat (so a double click) opens it. For the wheel
 and copying alone, `"mouse": { "focus": false, "sidebar": false }`. A change takes effect at the
 next start. [Terminals](docs/terminals.md) says what the mouse costs in the sidebar.

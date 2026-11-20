@@ -93,9 +93,21 @@ character is always typed, so a letter bound to a motion only works on the other
 | `viewer.top` `bottom`                                                       | `g` `G`                            | top and bottom                                              |
 | `viewer.panLeft` `panRight`                                                 | `Left` `h` / `Right` `l`           | pan                                                         |
 | `viewer.nextChange` `previousChange`                                        | `n` `p`                            | between changes                                             |
+| `viewer.copyMode`                                                           | `M-c`                              | copy mode in the file viewer                                |
 
 The numbered-lines popup is closed by `global.copyLines` again, and `global.togglePane` closes it
 and goes to the sidebar: it has no keys for those of its own.
+
+## Copy mode in the file viewer
+
+The file viewer is a popup, which has no copy mode of tmux's, so it has one of its own that looks
+the same. `viewer.copyMode` starts it with a cursor on the middle row of what is in view. The arrow keys
+(and the viewer's other scroll keys: `k` `j` `h` `l`, `PageUp`, `g` `G`) move the cursor, and the
+`copyMode` keys above select, jump a word, copy, drop the selection and leave. Dragging with the
+left button selects too, and letting go copies, as in a chat (with `mouse.copy` off neither the
+drag nor this key's copy are there). What is copied is the text of the file: not the line numbers,
+and not the removed lines, unless only removed lines are selected. `"copyMode": false` turns off the
+`copyMode` keys here as well, and then `viewer.copyMode` does nothing.
 
 ## We override tmux's copy mode
 
