@@ -50,7 +50,7 @@ function sidebar(params: { mouse?: MouseSettings; focus?: Focus; height?: number
       names: new Map(),
       collapsed: new Set(),
       promptTimes: new Map(),
-      folderOrder: [],
+      folderOrders: {},
       showAll: true,
       runningOnly: false,
       mode: { kind: 'list' },

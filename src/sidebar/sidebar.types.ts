@@ -123,8 +123,11 @@ export type SidebarState = {
   names: Map<string, string>;
   /** When each chat's last prompt was; filled only when chats are ordered by it. */
   promptTimes: Map<string, PromptTime>;
-  /** The folders the user moved, in order; they come before the alphabetical ones. */
-  folderOrder: string[];
+  /**
+   * The folders the user moved, in order, by profile id; they come before the alphabetical ones
+   * of that profile.
+   */
+  folderOrders: Record<string, string[]>;
 };
 
 /** What every screen of the sidebar works with. */

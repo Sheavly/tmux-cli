@@ -36,7 +36,7 @@ export function rows(ctx: SidebarContext): Row[] {
     collapsed: state.collapsed,
     showAll: state.showAll,
     runningOnly: state.runningOnly,
-    folderOrder: state.folderOrder,
+    folderOrder: state.folderOrders[state.activeProfile] ?? [],
     order: ctx.chatOrder,
     promptTimes: state.promptTimes,
   });

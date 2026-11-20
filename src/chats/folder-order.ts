@@ -1,35 +1,38 @@
-import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
-import path from 'node:path';
+import { isRecord, readOptionalText, writeJsonFile } from '../config/json-file.ts';
+
+/** The moved folders of each profile, by profile id; `''` is the id when the harness has none. */
+export type FolderOrders = Record<string, string[]>;
 
 /**
- * The folders the user moved, in the order they put them, kept in a file of our own
- * (`folder-order.json` next to the config file) as `["/path/a", "/path/b"]`.
+ * The folders the user moved, in the order they put them, per profile, kept in a file of our own
+ * (`folder-order.json` next to the config file) as `{"profile": ["/path/a", "/path/b"]}`.
+ * An older file holding one array, shared by every profile, is read as no moved folders.
  */
-export async function readFolderOrder(file: string): Promise<string[]> {
-  let text: string;
+export async function readFolderOrders(file: string): Promise<FolderOrders> {
+  const text = await readOptionalText(file);
 
-  try {
-    text = await readFile(file, 'utf8');
-  } catch (caughtError) {
-    if ((caughtError as NodeJS.ErrnoException).code === 'ENOENT') return [];
-
-    throw new Error(`Cannot read ${file}`, { cause: caughtError });
-  }
+  if (text === undefined) return {};
 
   const value: unknown = JSON.parse(text);
 
-  if (!Array.isArray(value)) throw new Error(`${file} must hold a JSON array`);
+  if (Array.isArray(value)) return {};
 
-  return value.filter((entry): entry is string => typeof entry === 'string');
+  if (!isRecord(value)) throw new Error(`${file} must hold a JSON object`);
+
+  const orders: FolderOrders = {};
+
+  for (const [profile, folders] of Object.entries(value)) {
+    if (Array.isArray(folders)) {
+      orders[profile] = folders.filter((entry): entry is string => typeof entry === 'string');
+    }
+  }
+
+  return orders;
 }
 
-export async function writeFolderOrder(params: { file: string; order: string[] }): Promise<void> {
-  const { file, order } = params;
-
-  await mkdir(path.dirname(file), { recursive: true });
-
-  const temporary = `${file}.tmp`;
-
-  await writeFile(temporary, `${JSON.stringify(order, null, 2)}\n`);
-  await rename(temporary, file);
+export async function writeFolderOrders(params: {
+  file: string;
+  orders: FolderOrders;
+}): Promise<void> {
+  await writeJsonFile(params.file, params.orders);
 }
