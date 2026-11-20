@@ -1,5 +1,5 @@
 import { elsewhereHint, runningElsewhere } from '../profiles/profiles.ts';
-import { footerHints } from './help.ts';
+import { footerHints, hintKey } from './help.ts';
 import { helpMaxLeft, helpMaxTop } from './help-view.ts';
 import { truncateLine } from './screen.ts';
 import type { SidebarContext } from './sidebar.types.ts';
@@ -114,5 +114,17 @@ function footerStatus(ctx: SidebarContext): string {
 
   if (state.message) return state.message;
 
-  return state.problems.length > 0 ? `${state.problems.length} unreadable chat file(s)` : '';
+  const problems =
+    state.problems.length > 0 ? `${state.problems.length} unreadable chat file(s)` : '';
+
+  return [runningOnlyNote(ctx), problems].filter((part) => part !== '').join(' · ');
+}
+
+/** Says the list is filtered, so a short list is not taken for lost chats. */
+function runningOnlyNote(ctx: SidebarContext): string {
+  if (!ctx.state.runningOnly) return '';
+
+  const key = hintKey(ctx.bindings, 'list.runningOnly');
+
+  return key === '' ? 'active chats only' : `active chats only - ${key}: all`;
 }

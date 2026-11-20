@@ -57,6 +57,8 @@ export type BuildInput = {
   panes: PaneInfo[];
   collapsed: ReadonlySet<string>;
   showAll: boolean;
+  /** Leave out the chats that are only stored, and the folders left with none. */
+  runningOnly?: boolean;
   /** The folders the user moved, in order; they come before the rest, which are alphabetical. */
   folderOrder?: readonly string[];
   /** What a folder's chats are ordered by; by when they began when not given. */
@@ -78,17 +80,33 @@ function orderKey(params: { chat: ChatRow; input: BuildInput }): number {
 export const RECENT_STORED = 6;
 
 export function buildRows(input: BuildInput): Row[] {
-  const groups = groupByWorkspace(input);
   const pinned = input.folderOrder ?? [];
-
-  // A folder the user moved stays listed with no chats, so it is not lost until unpinned.
-  for (const folder of pinned) {
-    if (!groups.has(folder)) groups.set(folder, []);
-  }
+  const groups = input.runningOnly
+    ? runningGroups(groupByWorkspace(input))
+    : withMovedFolders(groupByWorkspace(input), pinned);
 
   return orderFolders({ folders: [...groups.keys()], pinned }).flatMap((workspace) =>
     workspaceRows({ input, workspace, chats: groups.get(workspace) ?? [] }),
   );
+}
+
+/** A folder with nothing running is left out, a moved one too: this is a filter. */
+function runningGroups(groups: Map<string, ChatRow[]>): Map<string, ChatRow[]> {
+  const running = [...groups].map(
+    ([folder, chats]) => [folder, chats.filter((chat) => chat.state !== 'stored')] as const,
+  );
+
+  return new Map(running.filter(([, chats]) => chats.length > 0));
+}
+
+/** A folder the user moved stays listed with no chats, so it is not lost until unpinned. */
+function withMovedFolders(
+  groups: Map<string, ChatRow[]>,
+  pinned: readonly string[],
+): Map<string, ChatRow[]> {
+  const empty = new Map<string, ChatRow[]>(pinned.map((folder) => [folder, []]));
+
+  return new Map([...empty, ...groups]);
 }
 
 function groupByWorkspace(input: BuildInput): Map<string, ChatRow[]> {

@@ -6,7 +6,14 @@ import { test } from 'node:test';
 import type { ProfileInfo, StoredChat } from '../../harness/adapter.types.ts';
 import type { PaneInfo } from '../../session/panes.ts';
 import { fakePane } from '../../testing/pane.fake.ts';
-import { readActiveProfile, writeActiveProfile } from '../active.ts';
+import {
+  readActiveProfile,
+  readCollapsed,
+  readRunningOnly,
+  writeActiveProfile,
+  writeCollapsed,
+  writeRunningOnly,
+} from '../active.ts';
 import {
   chatsOnProfile,
   chooseProfile,
@@ -99,6 +106,41 @@ test('the selector lists each profile with its chats and what is running', () =>
     counts.map((count) => profileItem(count, 'azure')),
     ['  Amazon  (1 chat)', '▶ Work  (2 chats, 1 running)'],
   );
+});
+
+test('folded folders are saved in the same file and do not disturb the active profile', async () => {
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'shv-state-'));
+  const file = path.join(dir, 'state.json');
+
+  assert.deepEqual(await readCollapsed(file), []);
+
+  await writeActiveProfile({ file, adapter: 'sheavly-v1', id: 'aws' });
+  await writeCollapsed({ file, folders: new Set(['/a', '/b']) });
+  await writeActiveProfile({ file, adapter: 'sheavly-v1', id: 'azure' });
+
+  assert.deepEqual(await readCollapsed(file), ['/a', '/b']);
+  assert.equal(await readActiveProfile({ file, adapter: 'sheavly-v1' }), 'azure');
+
+  await writeCollapsed({ file, folders: [] });
+
+  assert.deepEqual(await readCollapsed(file), []);
+});
+
+test('the running-only filter is saved in the same file and is off by default', async () => {
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'shv-state-'));
+  const file = path.join(dir, 'state.json');
+
+  assert.equal(await readRunningOnly(file), false);
+
+  await writeRunningOnly({ file, on: true });
+  await writeCollapsed({ file, folders: ['/a'] });
+
+  assert.equal(await readRunningOnly(file), true);
+  assert.deepEqual(await readCollapsed(file), ['/a']);
+
+  await writeRunningOnly({ file, on: false });
+
+  assert.equal(await readRunningOnly(file), false);
 });
 
 test('the active profile is remembered per adapter in a file of our own', async () => {

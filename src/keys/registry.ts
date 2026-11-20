@@ -1,3 +1,4 @@
+import { COPY_MODE_ACTIONS } from './copy-mode-actions.constants.ts';
 import type { Grammar } from './key.ts';
 
 /**
@@ -77,53 +78,7 @@ export const ACTIONS = [
     description: 'twice: clear the prompt',
   },
 
-  // tmux's copy mode, which we add to
-  { id: 'copyMode.selectLeft', keys: ['S-Left'], modes: ['copyMode'], description: 'select left' },
-  {
-    id: 'copyMode.selectRight',
-    keys: ['S-Right'],
-    modes: ['copyMode'],
-    description: 'select right',
-  },
-  { id: 'copyMode.selectUp', keys: ['S-Up'], modes: ['copyMode'], description: 'select up' },
-  { id: 'copyMode.selectDown', keys: ['S-Down'], modes: ['copyMode'], description: 'select down' },
-  {
-    id: 'copyMode.wordPrevious',
-    keys: ['C-Left'],
-    modes: ['copyMode'],
-    description: 'jump a word back',
-  },
-  {
-    id: 'copyMode.wordNext',
-    keys: ['C-Right'],
-    modes: ['copyMode'],
-    description: 'jump a word forward',
-  },
-  {
-    id: 'copyMode.selectWordPrevious',
-    keys: ['C-S-Left'],
-    modes: ['copyMode'],
-    description: 'select a word back',
-  },
-  {
-    id: 'copyMode.selectWordNext',
-    keys: ['C-S-Right'],
-    modes: ['copyMode'],
-    description: 'select a word forward',
-  },
-  {
-    id: 'copyMode.copy',
-    keys: ['Enter', 'C-c'],
-    modes: ['copyMode'],
-    description: 'copy the selection and leave',
-  },
-  {
-    id: 'copyMode.escape',
-    keys: ['Escape'],
-    modes: ['copyMode'],
-    description: 'drop the selection, then leave',
-  },
-  { id: 'copyMode.quit', keys: ['q'], modes: ['copyMode'], description: 'leave' },
+  ...COPY_MODE_ACTIONS,
 
   // the sidebar, in every list it has
   {
@@ -188,6 +143,12 @@ export const ACTIONS = [
   { id: 'list.files', keys: ['f'], modes: ['list'], description: 'files the chat changed' },
   { id: 'list.rename', keys: ['R'], modes: ['list'], description: 'rename chat' },
   { id: 'list.move', keys: ['m'], modes: ['list'], description: 'move folder' },
+  {
+    id: 'list.runningOnly',
+    keys: ['A'],
+    modes: ['list'],
+    description: 'show only running chats',
+  },
   { id: 'list.showAll', keys: ['a'], modes: ['list'], description: 'show all chats' },
   { id: 'list.stop', keys: ['x'], modes: ['list'], description: 'stop chat' },
   { id: 'list.delete', keys: ['Delete'], modes: ['list'], description: 'delete chat' },

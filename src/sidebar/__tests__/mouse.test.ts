@@ -52,6 +52,7 @@ function sidebar(params: { mouse?: MouseSettings; focus?: Focus; height?: number
       promptTimes: new Map(),
       folderOrder: [],
       showAll: true,
+      runningOnly: false,
       mode: { kind: 'list' },
       message: '',
       focus,

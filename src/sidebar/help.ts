@@ -145,7 +145,7 @@ export function listHelp(options: HelpOptions): string[] {
     ...(options.profiles ? some(['list.profiles', 'list.nextProfile']) : []),
     ...some(['list.search', 'list.rename', 'list.move', 'list.stop']),
     ...(options.deleting ? some(['list.delete']) : []),
-    ...some(['list.showAll', 'list.redraw', 'list.detach', 'list.quitAll']),
+    ...some(['list.showAll', 'list.runningOnly', 'list.redraw', 'list.detach', 'list.quitAll']),
     ...(options.files ? some(['list.files']) : []),
     ...some(['navigation.help', 'global.togglePane']),
     ...chatHelp(options),

@@ -106,6 +106,8 @@ export type SidebarState = {
   /** Where the rows of the chat list were drawn, so a click on one finds it. */
   items: ItemsOnScreen;
   showAll: boolean;
+  /** Whether the list leaves out the chats that are only stored. */
+  runningOnly: boolean;
   /** The last screen written, so an unchanged one is not written again. */
   lastPaint: string;
   /** How many refreshes there have been; the chat list is read on every few. */

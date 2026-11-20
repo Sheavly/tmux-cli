@@ -1,7 +1,31 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { orderFolders, pinFolder, shiftFolder } from '../folder-order.utils.ts';
+import { fakePane } from '../../testing/pane.fake.ts';
 import { buildRows } from '../view.ts';
+
+test('running only leaves out stored chats and folders with none running, moved ones too', () => {
+  const rows = buildRows({
+    chats: [
+      { id: 'stored', workspace: '/a', startedAt: 1, updatedAt: 1 },
+      { id: 'live', workspace: '/b', startedAt: 2, updatedAt: 2 },
+    ],
+    labels: new Map(),
+    panes: [fakePane({ workspace: '/b', chat: 'live', session: 'main' })],
+    collapsed: new Set(),
+    showAll: false,
+    runningOnly: true,
+    folderOrder: ['/empty'],
+  });
+
+  assert.deepEqual(
+    rows.map((row) => [row.kind, row.workspace]),
+    [
+      ['workspace', '/b'],
+      ['chat', '/b'],
+    ],
+  );
+});
 
 test('a moved folder with no chats is still listed, in its place, marked as moved', () => {
   const rows = buildRows({

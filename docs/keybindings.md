@@ -62,6 +62,7 @@ character is always typed, so a letter bound to a motion only works on the other
 | `list.files`                                                                | `f`                                | files the chat changed                                      |
 | `list.rename`                                                               | `R`                                | rename chat                                                 |
 | `list.move`                                                                 | `m`                                | move the folder: it is pinned above the alphabetical ones   |
+| `list.runningOnly`                                                          | `A`                                | show only running chats (kept across restarts)              |
 | `list.showAll`                                                              | `a`                                | show all chats                                              |
 | `list.stop`                                                                 | `x`                                | stop chat                                                   |
 | `list.delete`                                                               | `Delete`                           | delete chat                                                 |

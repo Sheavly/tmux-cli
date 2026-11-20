@@ -54,6 +54,7 @@
       "files": "f",
       "rename": "R",
       "move": "m",
+      "runningOnly": "A",
       "showAll": "a",
       "stop": "x",
       "delete": "Delete",

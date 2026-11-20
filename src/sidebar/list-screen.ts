@@ -1,5 +1,6 @@
 import os from 'node:os';
 import type { ActionId } from '../keys/registry.ts';
+import { writeCollapsed, writeRunningOnly } from '../profiles/active.ts';
 import { chatsOnProfile, panesOnProfile } from '../profiles/profiles.ts';
 import { MAIN_SESSION } from '../session/panes.ts';
 import { browse } from './browser-screen.ts';
@@ -34,6 +35,7 @@ export function rows(ctx: SidebarContext): Row[] {
     panes: panesOnProfile(state.panes, state.activeProfile),
     collapsed: state.collapsed,
     showAll: state.showAll,
+    runningOnly: state.runningOnly,
     folderOrder: state.folderOrder,
     order: ctx.chatOrder,
     promptTimes: state.promptTimes,
@@ -79,6 +81,26 @@ export function moveCursor(ctx: SidebarContext, delta: number): void {
   ctx.draw();
 }
 
+/** Saves which folders are folded, saying so in the footer when the file cannot be written. */
+async function saveCollapsed(ctx: SidebarContext): Promise<void> {
+  try {
+    await writeCollapsed({ file: ctx.stateFile, folders: ctx.state.collapsed });
+  } catch (caughtError) {
+    ctx.state.message = `Cannot save ${ctx.stateFile}: ${(caughtError as Error).message}`;
+  }
+}
+
+/** Switches between every chat and the running ones only, and remembers the choice. */
+async function toggleRunningOnly(ctx: SidebarContext): Promise<void> {
+  ctx.state.runningOnly = !ctx.state.runningOnly;
+
+  try {
+    await writeRunningOnly({ file: ctx.stateFile, on: ctx.state.runningOnly });
+  } catch (caughtError) {
+    ctx.state.message = `Cannot save ${ctx.stateFile}: ${(caughtError as Error).message}`;
+  }
+}
+
 /** Opens (or folds, or expands) what the cursor is on. */
 export async function activate(ctx: SidebarContext): Promise<void> {
   const { state, session } = ctx;
@@ -89,6 +111,8 @@ export async function activate(ctx: SidebarContext): Promise<void> {
   if (row.kind === 'workspace') {
     if (state.collapsed.has(row.workspace)) state.collapsed.delete(row.workspace);
     else state.collapsed.add(row.workspace);
+
+    await saveCollapsed(ctx);
 
     return;
   }
@@ -133,7 +157,7 @@ function isShown(row: Row): boolean {
 }
 
 /** Puts the cursor on the chat (or child of one) that is on screen, opening its folder if it was collapsed. */
-function selectActive(ctx: SidebarContext): void {
+async function selectActive(ctx: SidebarContext): Promise<void> {
   const { state } = ctx;
   const active = rows(ctx).find(isShown);
 
@@ -155,6 +179,7 @@ function selectActive(ctx: SidebarContext): void {
 
   // Its folder is collapsed, so there is no row for it yet.
   state.collapsed.delete(onScreen.workspace);
+  await saveCollapsed(ctx);
 
   const row = rows(ctx).find(isShown);
 
@@ -193,9 +218,7 @@ type ListAction = (ctx: SidebarContext, row: Row | undefined) => Promise<void> |
 
 const LIST_ACTIONS: Partial<Record<ActionId, ListAction>> = {
   'navigation.open': (ctx) => activate(ctx),
-  'list.selectActive': (ctx) => {
-    selectActive(ctx);
-  },
+  'list.selectActive': (ctx) => selectActive(ctx),
   'list.newChat': (ctx, row) => startNew(ctx, row?.workspace),
   'list.browseFolder': (ctx) => browse(ctx, { dir: os.homedir(), showHidden: false }),
   'list.profiles': (ctx) => openProfiles(ctx),
@@ -211,6 +234,7 @@ const LIST_ACTIONS: Partial<Record<ActionId, ListAction>> = {
     startRename(ctx, row);
   },
   'list.move': (ctx, row) => startMove(ctx, row),
+  'list.runningOnly': (ctx) => toggleRunningOnly(ctx),
   'list.showAll': (ctx) => {
     ctx.state.showAll = !ctx.state.showAll;
   },

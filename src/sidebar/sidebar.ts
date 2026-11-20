@@ -7,7 +7,12 @@ import { configFilePath, type ChatOrder } from '../config/config.ts';
 import { MOUSE_ALL, type MouseSettings } from '../config/mouse-settings.ts';
 import type { HarnessAdapter } from '../harness/adapter.types.ts';
 import { defaultBindings, type Bindings } from '../keys/bindings.ts';
-import { readActiveProfile, stateFilePath } from '../profiles/active.ts';
+import {
+  readActiveProfile,
+  readCollapsed,
+  readRunningOnly,
+  stateFilePath,
+} from '../profiles/active.ts';
 import { DIVIDER_OPTION } from '../session/panes.ts';
 import type { Session } from '../session/session.ts';
 import type { Tmux } from '../tmux/tmux.ts';
@@ -39,6 +44,7 @@ function initialState(): SidebarState {
     scrollTop: 0,
     items: { firstRow: 0, top: 0, count: 0 },
     showAll: false,
+    runningOnly: false,
     lastPaint: '',
     tick: 0,
     focus: 'sidebar',
@@ -128,6 +134,8 @@ export async function runSidebar(params: {
 
   try {
     state.savedProfile = await readActiveProfile({ file: ctx.stateFile, adapter: adapter.name });
+    state.collapsed = new Set(await readCollapsed(ctx.stateFile));
+    state.runningOnly = await readRunningOnly(ctx.stateFile);
   } catch (caughtError) {
     state.message = (caughtError as Error).message;
   }
