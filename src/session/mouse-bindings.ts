@@ -16,10 +16,15 @@ const THEN = '\\;';
 /** The pane under the mouse gets the keyboard (what a click does for focus). */
 const FOCUS_FIRST = ['select-pane', '-t', '=', THEN];
 
-/** The pane wants the event for itself: it is in a mode (copy mode), or a program asked for the mouse. */
-const PANE_TAKES_IT = '#{||:#{pane_in_mode},#{mouse_any_flag}}';
-/** As above, and a program on the alternate screen (the sidebar, an editor) has no history to scroll. */
-const SCREEN_TAKES_IT = '#{||:#{alternate_on},#{pane_in_mode},#{mouse_any_flag}}';
+/**
+ * The sidebar always gets the event as it is, whether or not it asked for the mouse (with the
+ * `sidebar` action off, or while it is not running, it would otherwise fall into copy mode).
+ */
+const IS_SIDEBAR = '#{==:#{@sheavly_role},sidebar}';
+/** The pane wants the event for itself: it is the sidebar, in a mode (copy mode), or a program asked for the mouse. */
+const PANE_TAKES_IT = `#{||:${IS_SIDEBAR},#{||:#{pane_in_mode},#{mouse_any_flag}}}`;
+/** As above, and a program on the alternate screen (an editor) has no history to scroll. */
+const SCREEN_TAKES_IT = `#{||:#{alternate_on},${PANE_TAKES_IT}}`;
 
 /** What a double or triple click selects, and copies a moment later (so the selection is seen). */
 const copySelected = (select: 'select-word' | 'select-line'): string =>

@@ -41,7 +41,7 @@ test('a key that passes through sends itself when it is not for us', () => {
   assert.deepEqual(scroll?.command, [
     'if-shell',
     '-F',
-    '#{alternate_on}',
+    '#{||:#{alternate_on},#{==:#{@sheavly_role},sidebar}}',
     'send-keys M-p',
     'copy-mode -eu',
   ]);

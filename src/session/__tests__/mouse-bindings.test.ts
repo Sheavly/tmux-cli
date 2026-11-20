@@ -64,6 +64,12 @@ test('with copy off nothing selects or copies, and with scroll off nothing scrol
   assert.ok(commandOf(noScroll, 'root', 'MouseDrag1Pane'));
 });
 
+test('a drag, a double click and the wheel never start copy mode in the sidebar pane', () => {
+  for (const key of ['MouseDrag1Pane', 'DoubleClick1Pane', 'TripleClick1Pane', 'WheelUpPane']) {
+    assert.match(commandOf(MOUSE_ALL, 'root', key) ?? '', /@sheavly_role},sidebar/, key);
+  }
+});
+
 const tmux = createTmux({ socket: `shv-mouse-${process.pid}` });
 const listing = async (table: string) => tmux.run(['list-keys', '-T', table]);
 const option = async () => (await tmux.run(['show-options', '-gqv', 'mouse'])).trim();

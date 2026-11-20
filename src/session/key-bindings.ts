@@ -62,7 +62,17 @@ export async function applyBindings(params: {
   }
 
   await tmux.run(['set-option', '-g', BOUND_OPTION, bound.join(' ')]);
+  await tmux.run(['set-hook', '-g', 'pane-mode-changed', SIDEBAR_LEAVES_MODE]);
 }
+
+/**
+ * The sidebar has no use for a tmux mode, so whatever way one was entered (a key, the mouse, a
+ * command) it is left at once: a backstop for the bindings above that already keep it out.
+ */
+const SIDEBAR_LEAVES_MODE = [
+  'if-shell -F "#{&&:#{pane_in_mode},#{==:#{@sheavly_role},sidebar}}"',
+  '"send-keys -t #{hook_pane} -X cancel"',
+].join(' ');
 
 async function unbindStale(tmux: Tmux): Promise<void> {
   const recorded = (await tmux.run(['show-options', '-gqv', BOUND_OPTION])).trim();
@@ -92,7 +102,10 @@ export function rootBindings(params: { bindings: Bindings; commands: KeyCommands
     // screen (the sidebar, an editor) has no history to scroll and gets the key itself.
     [
       'global.scrollBack',
-      (key) => ['if-shell', '-F', '#{alternate_on}', `send-keys ${key}`, 'copy-mode -eu'],
+      (key) => [
+        ...['if-shell', '-F', '#{||:#{alternate_on},#{==:#{@sheavly_role},sidebar}}'],
+        ...[`send-keys ${key}`, 'copy-mode -eu'],
+      ],
     ],
     // A way out that does not depend on the sidebar process, which holds the `q` key and may be
     // dead.
