@@ -1,6 +1,7 @@
 import os from 'node:os';
 import path from 'node:path';
 import type { AdapterDefinition, HarnessAdapter, StoredChat } from '../../adapter.types.ts';
+import { currentActivity } from './activity.ts';
 import {
   newChildrenState,
   runningChildren,
@@ -86,6 +87,16 @@ export function createSheavlyV1(options: SheavlyV1Options): HarnessAdapter {
     return dir;
   }
 
+  /** The chat's stream state, brought up to date with what was added since the last look. */
+  async function lookAtStream(chat: { id: string }): Promise<ChildrenState> {
+    const state = childStates.get(chat.id) ?? newChildrenState();
+
+    childStates.set(chat.id, state);
+    await updateChildren({ dir: dirOf(chat), state });
+
+    return state;
+  }
+
   return {
     name: SHEAVLY_V1,
     isChatId,
@@ -145,14 +156,15 @@ export function createSheavlyV1(options: SheavlyV1Options): HarnessAdapter {
     promptText,
     clearPromptKeys,
 
+    async activity(chat, since) {
+      const { activity: state } = await lookAtStream(chat);
+
+      return currentActivity({ state, since });
+    },
+
     children: {
       async list(chat, since) {
-        const state = childStates.get(chat.id) ?? newChildrenState();
-
-        childStates.set(chat.id, state);
-        await updateChildren({ dir: dirOf(chat), state });
-
-        return runningChildren({ state, since });
+        return runningChildren({ state: await lookAtStream(chat), since });
       },
 
       async follow({ chat, childId, columns, write, signal }) {

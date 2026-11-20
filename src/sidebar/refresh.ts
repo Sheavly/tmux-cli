@@ -1,4 +1,5 @@
 import { MAIN_SESSION, listPanes, pendingChats, type PaneInfo } from '../session/panes.ts';
+import { refreshActivity } from './activity-refresh.ts';
 import { refreshChildren } from './children-refresh.ts';
 import { refreshEdits } from './files-screen.ts';
 import { loadPromptTimes } from './prompt-times.ts';
@@ -50,6 +51,7 @@ export async function refresh(ctx: SidebarContext): Promise<void> {
 
     await adoptNewChats(ctx);
     await refreshChildren(ctx);
+    await refreshActivity(ctx);
     await session.reapFinished(state.panes);
     await session.reapStaleFollows(state.panes);
     await session.syncParkedSizes(state.panes);

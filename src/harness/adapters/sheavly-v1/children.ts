@@ -1,10 +1,19 @@
 import path from 'node:path';
 import type { ChatChild } from '../../adapter.types.ts';
 import { cleanLabel } from '../../../terminal/text.ts';
+import {
+  ACTIVITY_MARKERS,
+  foldActivity,
+  newActivityState,
+  parseActivity,
+  resetActivity,
+  type ActivityState,
+} from './activity.ts';
 import { newCursor, readAppendedInChunks, type Cursor } from './incremental-lines.ts';
+import { asRecord } from './json-record.ts';
 
 /**
- * What a chat has started, read from the conversation's `stream.jsonl`. That file is the harness's
+ * What a chat has started (and, through `activity.ts`, what it is doing), read from the conversation's `stream.jsonl`. That file is the harness's
  * own record, not something it promises to other programs, so everything read from it is checked
  * here and a line that is not what we expect is skipped, never trusted.
  */
@@ -46,10 +55,16 @@ export type ChildrenState = {
   cursor: Cursor;
   sessions: Map<string, Session>;
   tasks: Map<string, Task>;
+  activity: ActivityState;
 };
 
 export function newChildrenState(): ChildrenState {
-  return { cursor: newCursor(), sessions: new Map(), tasks: new Map() };
+  return {
+    cursor: newCursor(),
+    sessions: new Map(),
+    tasks: new Map(),
+    activity: newActivityState(),
+  };
 }
 
 const EVENT_MARKERS = [
@@ -58,13 +73,8 @@ const EVENT_MARKERS = [
   '"session_released"',
   '"task_started"',
   '"task_ended"',
+  ...ACTIVITY_MARKERS,
 ];
-
-function asRecord(value: unknown): Record<string, unknown> | undefined {
-  return typeof value === 'object' && value !== null
-    ? (value as Record<string, unknown>)
-    : undefined;
-}
 
 function parseSession(value: unknown, open: boolean): Session | undefined {
   const session = asRecord(value);
@@ -120,16 +130,21 @@ function parseTask(params: { value: unknown; owner: unknown; open: boolean }): T
 
 /** One line of the stream as a session or task starting or ending; nothing for any other line. */
 export function parseStreamLine(line: string): ChildEvent | undefined {
+  return childEventOf(parseRecord(line));
+}
+
+/** The line as an object, when it may be about sessions, tasks or activity; text search first. */
+function parseRecord(line: string): Record<string, unknown> | undefined {
   if (!EVENT_MARKERS.some((marker) => line.includes(marker))) return undefined;
 
-  let record: Record<string, unknown> | undefined;
-
   try {
-    record = asRecord(JSON.parse(line));
+    return asRecord(JSON.parse(line));
   } catch {
     return undefined;
   }
+}
 
+function childEventOf(record: Record<string, unknown> | undefined): ChildEvent | undefined {
   const update = asRecord(record?.update);
 
   if (record?.kind === 'update' && typeof update?.type === 'string') {
@@ -189,15 +204,23 @@ export async function updateChildren(params: { dir: string; state: ChildrenState
     onRestart: () => {
       state.sessions.clear();
       state.tasks.clear();
+      resetActivity(state.activity);
     },
     onLines: (lines) => {
-      for (const line of lines) {
-        const event = parseStreamLine(line);
-
-        if (event) fold(state, event);
-      }
+      for (const line of lines) foldLine(state, line);
     },
   });
+}
+
+/** One stream line can say something about a child and about what the chat is doing at once. */
+function foldLine(state: ChildrenState, line: string): void {
+  const record = parseRecord(line);
+  const event = childEventOf(record);
+  const change = parseActivity(record);
+
+  if (event) fold(state, event);
+
+  if (change) foldActivity(state.activity, change);
 }
 
 function isRunning(item: { open: boolean; startedAt: number }, since: number): boolean {

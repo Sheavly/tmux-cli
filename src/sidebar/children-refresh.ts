@@ -1,4 +1,5 @@
 import type { ChatChild, HarnessAdapter } from '../harness/adapter.types.ts';
+import { liveChats } from './live-chats.ts';
 import type { SidebarState } from './sidebar.types.ts';
 
 /**
@@ -17,16 +18,9 @@ export async function refreshChildren(ctx: {
 
   const next = new Map<string, ChatChild[]>();
 
-  for (const pane of state.panes) {
-    const chat =
-      pane.role === 'chat' && !pane.dead && pane.chat !== ''
-        ? state.chats.find((candidate) => candidate.id === pane.chat)
-        : undefined;
-
-    if (!chat) continue;
-
+  for (const { chat, since } of liveChats(state)) {
     try {
-      const children = await adapter.children.list(chat, pane.startedAt);
+      const children = await adapter.children.list(chat, since);
 
       if (children.length > 0) next.set(chat.id, children);
     } catch {

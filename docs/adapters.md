@@ -32,6 +32,17 @@ files the harness keeps for itself and does not promise to other programs, so ev
 checked, one that isn't what is expected is skipped, and a sheavly with other files is a new
 adapter, not a change here.
 
+What a running chat is doing (the optional `activity`) is `running` (working on its turn),
+`awaiting_input` (blocked on the user, such as a command to allow, in the chat or in one of its
+sub-agents) or `idle` (its turn is over; it waits for a prompt, or for what it started in the
+background). It is given the time the chat's process started, like `children`, and only what
+happened after it counts. The sidebar draws it in place of the dot of a running chat that is not on
+screen: a spinner, a yellow `?`, or the usual dot for idle; the chat on screen keeps its arrow, and
+a chat that ended keeps its cross. Without `activity` no chat has one. sheavly-v1 reads it from the
+same `stream.jsonl` as the children, in the same pass: the main session's `session_*` updates say
+whether a prompt is being worked on, `run_state` says the run is held open for tasks (so it does no
+work), and an `approval_requested` without its `approval_resolved` says it waits for the user.
+
 `src/harness/adapters/sheavly-v1/` is the adapter for sheavly as it is today. A new sheavly API
 means a new folder next to it that exports an `AdapterDefinition`, and one entry in the list in
 `src/harness/index.ts`; pick it with the `adapter` setting.

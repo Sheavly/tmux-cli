@@ -1,6 +1,6 @@
 import type { PromptTime } from '../chats/prompt-times.ts';
 import type { ChatOrder } from '../config/config.ts';
-import type { ChatChild, StoredChat } from '../harness/adapter.types.ts';
+import type { ChatActivity, ChatChild, StoredChat } from '../harness/adapter.types.ts';
 import { followKey } from '../session/follow-panes.ts';
 import { MAIN_SESSION, type PaneInfo } from '../session/panes.ts';
 import { orderFolders } from './folder-order.utils.ts';
@@ -26,6 +26,11 @@ export type Row =
       /** Empty when the chat isn't running in tmux. */
       paneId: string;
       state: ChatState;
+      /**
+       * What the chat is doing, drawn in place of its dot. Only a running chat that is not the one
+       * on screen has it: that one is seen, and its arrow stays.
+       */
+      activity?: ChatActivity;
       label: string;
       /** When the chat began: what a folder's chats are ordered by. */
       startedAt: number;
@@ -53,6 +58,8 @@ export type BuildInput = {
   chats: StoredChat[];
   /** The running children of each chat, by conversation id; a chat that is not running has none. */
   children?: ReadonlyMap<string, readonly ChatChild[]>;
+  /** What each running chat is doing, by conversation id. */
+  activity?: ReadonlyMap<string, ChatActivity>;
   labels: ReadonlyMap<string, string>;
   panes: PaneInfo[];
   collapsed: ReadonlySet<string>;
@@ -121,6 +128,8 @@ function groupByWorkspace(input: BuildInput): Map<string, ChatRow[]> {
 
   for (const chat of input.chats) {
     const pane = chatPanes.get(chat.id);
+    const state = stateOf(pane);
+    const activity = state === 'running' ? input.activity?.get(chat.id) : undefined;
 
     add({
       kind: 'chat',
@@ -128,7 +137,8 @@ function groupByWorkspace(input: BuildInput): Map<string, ChatRow[]> {
       workspace: chat.workspace,
       chatId: chat.id,
       paneId: pane?.id ?? '',
-      state: stateOf(pane),
+      state,
+      ...(activity ? { activity } : {}),
       label: input.labels.get(chat.id) ?? '…',
       startedAt: chat.startedAt,
       updatedAt: chat.updatedAt,

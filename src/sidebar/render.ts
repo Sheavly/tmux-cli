@@ -1,3 +1,4 @@
+import { SPINNER_FRAME_MS, SPINNER_FRAMES } from '../terminal/spinner.constants.ts';
 import { relativeTime, type ChatState, type Row } from './view.ts';
 import {
   displayWidth,
@@ -272,6 +273,27 @@ function renderChild(params: { row: Extract<Row, { kind: 'child' }>; width: numb
   return `${indent}${style.lit}${symbol}${ESC}39m ${name} `;
 }
 
+/**
+ * The dot of a chat row. A chat that is working shows the loader's spinner, at the frame the clock
+ * is at, so every row turns together; one that waits for the user shows a yellow `?`.
+ */
+function markerOf(params: {
+  row: Extract<Row, { kind: 'chat' }>;
+  now: number;
+}): (typeof MARKERS)[ChatState] {
+  const { row, now } = params;
+
+  if (row.activity === 'awaiting_input') return { symbol: '?', color: style.yellow + style.bold };
+
+  if (row.activity === 'running') {
+    const frame = Math.floor(now / SPINNER_FRAME_MS) % SPINNER_FRAMES.length;
+
+    return { symbol: SPINNER_FRAMES[frame] as string, color: style.green };
+  }
+
+  return MARKERS[row.state];
+}
+
 function isOnScreen(row: Row): boolean {
   return row.kind === 'chat' && row.state === 'shown';
 }
@@ -282,7 +304,7 @@ function renderChat(params: {
   selected: boolean;
 }): string {
   const { row, screen, selected } = params;
-  const { symbol, color } = MARKERS[row.state];
+  const { symbol, color } = markerOf({ row, now: screen.now });
   const age = row.updatedAt > 0 ? relativeTime({ now: screen.now, then: row.updatedAt }) : '';
   const labelWidth = Math.max(1, screen.width - 10);
   const label = padRight(truncate(row.label, labelWidth), labelWidth);

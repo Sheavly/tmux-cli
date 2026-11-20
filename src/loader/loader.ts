@@ -1,9 +1,8 @@
 import { LOADING_OPTION, MAIN_SESSION } from '../session/panes.ts';
+import { SPINNER_FRAME_MS, SPINNER_FRAMES } from '../terminal/spinner.constants.ts';
 import type { Tmux } from '../tmux/tmux.ts';
 
-const FRAMES = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
 const LABEL = 'Loading chat…';
-const FRAME_MS = 100;
 const GIVE_UP_MS = 120_000;
 
 /**
@@ -52,12 +51,12 @@ export async function runLoader(params: { tmux: Tmux; pane: string }): Promise<v
 
       if (await isOnScreen(tmux, pane)) {
         shown = true;
-        await setStatus(` ${FRAMES[frame++ % FRAMES.length]} ${LABEL} `);
+        await setStatus(` ${SPINNER_FRAMES[frame++ % SPINNER_FRAMES.length]} ${LABEL} `);
       } else {
         await clearStatus();
       }
 
-      await new Promise((resolve) => setTimeout(resolve, FRAME_MS));
+      await new Promise((resolve) => setTimeout(resolve, SPINNER_FRAME_MS));
     }
   } finally {
     await clearStatus();

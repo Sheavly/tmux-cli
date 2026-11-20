@@ -57,6 +57,33 @@ export function ended(id: string, more: TaskMore = {}): string {
   return taskLine({ type: 'task_ended', id, text: '', more });
 }
 
+/** A session update (`session_resumed`, `session_idle`...) of the main session or a sub-agent. */
+export function turn(type: string, at: number, id = MAIN): string {
+  const session = { id, depth: id === MAIN ? 1 : 2, startedAt: 1 };
+
+  return JSON.stringify({ seq: 3, sessionId: id, kind: 'update', update: { type, session }, at });
+}
+
+/** The loop's `run_state` event of a session. */
+export function runState(state: 'working' | 'waiting', at: number, id = MAIN): string {
+  const event = { seq: 4, type: 'run_state', state, groupedTasks: 0 };
+
+  return JSON.stringify({ seq: 4, sessionId: id, kind: 'event', event, at });
+}
+
+/** A command the session asked the user to allow, and the answer to it. */
+export function asked(id: string, at: number, session = MAIN): string {
+  const update = { type: 'approval_requested', request: { id, tool: 'run_command' } };
+
+  return JSON.stringify({ seq: 5, sessionId: session, kind: 'approval', update, at });
+}
+
+export function answered(id: string, at: number, session = MAIN): string {
+  const update = { type: 'approval_resolved', id, response: { decision: 'approve' } };
+
+  return JSON.stringify({ seq: 6, sessionId: session, kind: 'approval', update, at });
+}
+
 /** A conversation folder holding a stream of these lines, and the folder's path. */
 export async function conversation(lines: string[]): Promise<{ dir: string; stream: string }> {
   const dir = await mkdtemp(path.join(os.tmpdir(), 'shv-conversation-'));

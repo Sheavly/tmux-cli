@@ -2,6 +2,7 @@ import type { PromptTime } from '../chats/prompt-times.ts';
 import type { ChatOrder } from '../config/config.ts';
 import type { Group, Grouping } from '../files/commits.ts';
 import type {
+  ChatActivity,
   ChatChild,
   EditedFile,
   EditState,
@@ -86,6 +87,8 @@ export type SidebarState = {
   chats: StoredChat[];
   /** The running sub-agents and background commands of each running chat, by conversation id. */
   children: Map<string, ChatChild[]>;
+  /** What each running chat is doing, by conversation id; a chat that is not running has none. */
+  activity: Map<string, ChatActivity>;
   panes: PaneInfo[];
   /** The harness's profiles; empty without profiles. */
   profiles: ProfileInfo[];

@@ -31,6 +31,7 @@ export function rows(ctx: SidebarContext): Row[] {
   return buildRows({
     chats: chatsOnProfile(state.chats, state.activeProfile),
     children: state.children,
+    activity: state.activity,
     labels: new Map([...state.labels, ...state.names]),
     panes: panesOnProfile(state.panes, state.activeProfile),
     collapsed: state.collapsed,

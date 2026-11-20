@@ -19,6 +19,7 @@ import type { Tmux } from '../tmux/tmux.ts';
 import { drawScreen } from './draw.ts';
 import { startFullScreen } from './full-screen.ts';
 import type { MouseEvent } from '../terminal/mouse.utils.ts';
+import { SPINNER_FRAME_MS } from '../terminal/spinner.constants.ts';
 import { handleKey } from './handle-key.ts';
 import { handleMouse } from './mouse.ts';
 import { refresh } from './refresh.ts';
@@ -31,6 +32,7 @@ function initialState(): SidebarState {
     trackers: new Map(),
     chats: [],
     children: new Map(),
+    activity: new Map(),
     panes: [],
     profiles: [],
     activeProfile: '',
@@ -142,6 +144,11 @@ export async function runSidebar(params: {
 
   await ctx.refresh();
   setInterval(() => void ctx.refresh(), PANE_REFRESH_MS);
+  // The spinner turns on the clock, which only a draw reads. A draw that changes nothing (the
+  // screen is not the list, or the running chat is out of sight) writes nothing.
+  setInterval(() => {
+    if ([...state.activity.values()].includes('running')) ctx.draw();
+  }, SPINNER_FRAME_MS);
 
   return new Promise<never>(() => undefined);
 }

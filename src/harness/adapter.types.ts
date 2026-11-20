@@ -75,6 +75,13 @@ export type ChatChild = {
   startedAt: number;
 };
 
+/**
+ * What a running chat is doing: `running` works on its turn (the model or a tool), `awaiting_input`
+ * is blocked on the user (a command to allow, in the chat or in a sub-agent of it), and `idle` has
+ * finished its turn and waits for the next prompt or for what it started in the background.
+ */
+export type ChatActivity = 'running' | 'awaiting_input' | 'idle';
+
 /** What the manager keeps between looks at one chat's edits; the adapter owns what is inside. */
 export type EditState = { files: Map<string, EditedFile>; cursor: unknown };
 
@@ -152,6 +159,13 @@ export type HarnessAdapter = {
       signal: AbortSignal;
     }) => Promise<void>;
   };
+  /**
+   * What a running chat is doing right now. Only those that happened at or after `since` (epoch
+   * milliseconds, when the chat's process started) count: what an earlier run of the same
+   * conversation left behind is not happening any more. Left out when the harness can't tell, and
+   * then no chat has an activity.
+   */
+  activity?: (chat: StoredChat, since: number) => Promise<ChatActivity>;
   /** The files a chat changed. Left out when the harness can't tell. */
   edits?: {
     /** Folds what the chat has done since the last call into `state`; true if anything changed. */
