@@ -2,6 +2,7 @@ import { stripEscapes } from '../../../terminal/ansi.ts';
 import { cleanLabel, cleanText } from '../../../terminal/text.ts';
 import { truncateColumns } from '../../../terminal/width.utils.ts';
 import { style } from '../../../viewer/row-render.ts';
+import { styleMarkdown } from './markdown-text.ts';
 
 /** How much of the task a sub-agent was given is repeated at the top, in rows. */
 const TASK_ROWS = 6;
@@ -58,7 +59,7 @@ function assistantBlock(params: { entry: Record<string, unknown>; columns: numbe
   const { entry, columns } = params;
   const text = safeText(entry.content).trim();
   const rows = [
-    ...(text === '' ? [] : [text, '']),
+    ...(text === '' ? [] : [styleMarkdown(text), '']),
     ...callRows({ calls: entry.toolCalls, columns }),
   ];
 
