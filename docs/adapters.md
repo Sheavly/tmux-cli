@@ -16,6 +16,12 @@ sources with the harness's `tsx` and only reads the stored stream, never a backe
 can't run (the harness changed or is missing), the last few messages from the history are printed
 as plain text. A chat that is already running is just shown as it is.
 
+sheavly-v1 does not list two kinds of stored chat, and does not report them as problems (they stay
+on disk, untouched): chats whose workspace is the harness's own `workbook` folder (`workbook` in
+the harness folder, `SHEAVLY_HARNESS_DIR`), which are the harness's tests, and chats whose
+workspace folder no longer exists, since they can't be reopened there. A folder that comes back
+brings its chats back at the next refresh.
+
 `src/harness/adapters/sheavly-v1/` is the adapter for sheavly as it is today. A new sheavly API
 means a new folder next to it that exports an `AdapterDefinition`, and one entry in the list in
 `src/harness/index.ts`; pick it with the `adapter` setting.

@@ -1,6 +1,7 @@
 import { readFile, readdir, rm, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { cleanLabel } from '../../../terminal/text.ts';
+import { filterListable } from './listable.ts';
 import { openIfExists } from './open-file.ts';
 
 /** A conversation as sheavly v1 stores it; `dir` and `status` never leave this adapter. */
@@ -74,9 +75,13 @@ async function readProfileName(file: string, id: string): Promise<string> {
 /**
  * Every stored conversation of every profile, read from sheavly's own layout
  * (`profiles/<profile>/workspaces/<key>/conversations/<id>/index.json`). Read-only: the manager
- * never writes there.
+ * never writes there. Chats of the harness's `workbook` and chats whose workspace folder no longer
+ * exists are left out (see `filterListable`).
  */
-export async function listChats(params: { sheavlyHome: string }): Promise<ChatListing> {
+export async function listChats(params: {
+  sheavlyHome: string;
+  harnessDir: string;
+}): Promise<ChatListing> {
   const listing: ChatListing = { chats: [], problems: [] };
   const profilesDir = path.join(params.sheavlyHome, 'profiles');
   const profiles = await readDirNames(profilesDir);
@@ -110,6 +115,7 @@ export async function listChats(params: { sheavlyHome: string }): Promise<ChatLi
   }
 
   forgetChatsOutside({ prefix: profilesDir + path.sep, keep: seen });
+  listing.chats = await filterListable({ chats: listing.chats, harnessDir: params.harnessDir });
 
   return listing;
 }

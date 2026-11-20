@@ -126,7 +126,8 @@ test('chats, labels, edits and deletion work through the adapter without exposin
   await mkdir(dir, { recursive: true });
   await writeFile(
     path.join(dir, 'index.json'),
-    JSON.stringify({ id: ID, workspace: '/w', status: 'open', startedAt: 1, updatedAt: 2 }),
+    // The home folder stands in for the workspace: it must exist to be listed.
+    JSON.stringify({ id: ID, workspace: home, status: 'open', startedAt: 1, updatedAt: 2 }),
   );
   await writeFile(
     path.join(dir, 'history.jsonl'),
@@ -139,7 +140,7 @@ test('chats, labels, edits and deletion work through the adapter without exposin
   const adapter = createSheavlyV1({ sheavlyHome: home, harnessDir: '/h', command: 'go' });
   const { chats } = await adapter.listChats();
 
-  assert.deepEqual(chats, [{ id: ID, workspace: '/w', startedAt: 1, updatedAt: 2, profile: 'p' }]);
+  assert.deepEqual(chats, [{ id: ID, workspace: home, startedAt: 1, updatedAt: 2, profile: 'p' }]);
 
   const [chat] = chats;
 
@@ -150,7 +151,7 @@ test('chats, labels, edits and deletion work through the adapter without exposin
   assert.equal(await adapter.edits?.update(chat!, state), true);
   assert.deepEqual(
     latestFirst(state).map((file) => [file.path, file.kind, file.at]),
-    [['/w/a.ts', 'edited', 5]],
+    [[path.join(home, 'a.ts'), 'edited', 5]],
   );
   // Nothing was added, so a second look finds nothing new.
   assert.equal(await adapter.edits?.update(chat!, state), false);

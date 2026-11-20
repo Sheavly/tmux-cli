@@ -17,9 +17,14 @@ const index = (extra: object = {}) =>
     ...extra,
   });
 
+/** A workspace that exists, so a chat in it is listed. */
+const WORKSPACE = os.tmpdir();
+const HARNESS = '/h';
+const listed = (extra: object = {}) => index({ workspace: WORKSPACE, ...extra });
+
 /** The listing of a sheavly home that must hold the chat `ID` and no other. */
 async function listOnlyChat(home: string) {
-  const listing = await listChats({ sheavlyHome: home });
+  const listing = await listChats({ sheavlyHome: home, harnessDir: HARNESS });
 
   assert.deepEqual(
     listing.chats.map((chat) => chat.id),
@@ -72,7 +77,7 @@ test('listChats reads every profile and workspace, and reports what it cannot us
 
   await mkdir(path.join(conversations, ID), { recursive: true });
   await mkdir(path.join(conversations, bad), { recursive: true });
-  await writeFile(path.join(conversations, ID, 'index.json'), index());
+  await writeFile(path.join(conversations, ID, 'index.json'), listed());
   await writeFile(path.join(conversations, bad, 'index.json'), '{nope');
   await writeFile(
     path.join(conversations, ID, 'history.jsonl'),
@@ -99,7 +104,7 @@ test('a folder that is not a conversation is skipped quietly; one that lost its 
     await mkdir(path.join(conversations, id), { recursive: true });
   }
 
-  await writeFile(path.join(conversations, ID, 'index.json'), index());
+  await writeFile(path.join(conversations, ID, 'index.json'), listed());
   // What a process still running leaves when its conversation was deleted: one stream event.
   await writeFile(path.join(conversations, orphan, 'stream.jsonl'), '{"seq":0}\n');
   // A chat that is just being created has nothing in its folder yet (`empty`).
@@ -120,7 +125,51 @@ test('a folder that is not a conversation is skipped quietly; one that lost its 
 test('a sheavly home with nothing stored lists nothing', async () => {
   const home = await mkdtemp(path.join(os.tmpdir(), 'shv-'));
 
-  assert.deepEqual(await listChats({ sheavlyHome: home }), { chats: [], problems: [] });
+  assert.deepEqual(await listChats({ sheavlyHome: home, harnessDir: HARNESS }), {
+    chats: [],
+    problems: [],
+  });
+});
+
+test('chats of the harness workbook and of folders that are gone are not listed, and are not problems', async () => {
+  const home = await mkdtemp(path.join(os.tmpdir(), 'shv-'));
+  const harnessDir = await mkdtemp(path.join(os.tmpdir(), 'shv-harness-'));
+  const conversations = path.join(home, 'profiles', 'p1', 'workspaces', 'k1', 'conversations');
+  const inWorkbook = path.join(harnessDir, 'workbook', 'workspaces', 'basic');
+  const lookAlike = path.join(harnessDir, 'workbook-old');
+  const ids = {
+    kept: ID,
+    workbook: '11111111-1111-1111-1111-111111111111',
+    workbookRoot: '22222222-2222-2222-2222-222222222222',
+    gone: '33333333-3333-3333-3333-333333333333',
+    lookAlike: '44444444-4444-4444-4444-444444444444',
+  };
+  const workspaces: Record<string, string> = {
+    [ids.kept]: WORKSPACE,
+    [ids.workbook]: inWorkbook,
+    [ids.workbookRoot]: path.join(harnessDir, 'workbook'),
+    [ids.gone]: path.join(harnessDir, 'deleted-project'),
+    [ids.lookAlike]: lookAlike,
+  };
+
+  // The workbook folders exist, so only the rule about the workbook can hide them.
+  await mkdir(inWorkbook, { recursive: true });
+  await mkdir(lookAlike, { recursive: true });
+
+  for (const [id, workspace] of Object.entries(workspaces)) {
+    await mkdir(path.join(conversations, id), { recursive: true });
+    await writeFile(path.join(conversations, id, 'index.json'), index({ id, workspace }));
+  }
+
+  const listing = await listChats({ sheavlyHome: home, harnessDir });
+
+  assert.deepEqual(listing.chats.map((chat) => chat.id).toSorted(), [ids.lookAlike, ids.kept]);
+  assert.deepEqual(listing.problems, []);
+
+  // The folder coming back is enough for its chats to be listed again.
+  await mkdir(workspaces[ids.gone] as string);
+
+  assert.equal((await listChats({ sheavlyHome: home, harnessDir })).chats.length, 3);
 });
 
 test('deleteChat removes a stored conversation folder and nothing else', async () => {

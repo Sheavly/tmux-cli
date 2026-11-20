@@ -81,7 +81,10 @@ export function createSheavlyV1(options: SheavlyV1Options): HarnessAdapter {
     describeStore: () => options.sheavlyHome,
 
     async listChats() {
-      const listing = await listChats({ sheavlyHome: options.sheavlyHome });
+      const listing = await listChats({
+        sheavlyHome: options.sheavlyHome,
+        harnessDir: options.harnessDir,
+      });
 
       dirs.clear();
 
