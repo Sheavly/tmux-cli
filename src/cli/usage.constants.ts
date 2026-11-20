@@ -9,5 +9,5 @@ export const USAGE = `sheavly-tmux: sheavly chats in tmux, a sidebar beside the 
 In the session: Enter opens a chat, n starts a new one, M-s switches between the sidebar and the chat,
 in a chat PageUp scrolls back and M-g numbers its lines to jump to one and copy from there.
 Those are the default keys; all of them can be changed (see \`keys\` and the README).
-Settings: ~/.config/sheavly-tmux/config.json (adapter, harnessDir, command, sidebarWidth, socket, keys).
+Settings: ~/.config/sheavly-tmux/config.json (adapter, harnessDir, command, mode, sidebarWidth, socket, keys).
 --yes accepts the warnings about keys that were left unbound, without asking.`;

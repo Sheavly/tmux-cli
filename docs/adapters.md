@@ -35,3 +35,12 @@ adapter, not a change here.
 `src/harness/adapters/sheavly-v1/` is the adapter for sheavly as it is today. A new sheavly API
 means a new folder next to it that exports an `AdapterDefinition`, and one entry in the list in
 `src/harness/index.ts`; pick it with the `adapter` setting.
+
+An adapter's own settings in the config file (for sheavly-v1: `harnessDir`, `command` and `mode`)
+are named in its definition's `settingKeys`. The config loader accepts the keys of every
+registered adapter and hands them to the chosen one as strings; it needs no change for a new
+adapter. A setting the chosen adapter does not list is an error, so one left over from another
+adapter is not silently ignored.
+
+A chat id may hold any characters the adapter's `isChatId` accepts, a colon included: where the
+manager joins ids into one tag, it escapes them.

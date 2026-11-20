@@ -54,10 +54,10 @@ Declare function members as properties (`recap?: (chat) => Promise<string>`), no
    a missing one as nothing) rather than copying them.
 2. Register it in `DEFINITIONS` in `src/harness/index.ts`. The user picks it with `adapter` in the
    config.
-3. Settings the adapter reads from the config file (sheavly-v1 has `harnessDir` and `command`) must
-   also be named in `ADAPTER_KEYS` in `src/config/config.ts`, or the config loader rejects them as
-   unknown keys. Defaults, then the file, then environment variables, as `resolveSheavlyV1Options`
-   does.
+3. Settings the adapter reads from the config file (sheavly-v1 has `harnessDir`, `command` and
+   `mode`) are listed in the definition's `settingKeys`; the config loader accepts the keys of
+   every registered adapter, and `createAdapter` refuses a key the chosen adapter doesn't list.
+   Defaults, then the file, then environment variables, as `resolveSheavlyV1Options` does.
 4. Update `docs/adapters.md`.
 
 ## Tests
