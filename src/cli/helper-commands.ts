@@ -57,7 +57,14 @@ async function loader(context: CliContext): Promise<void> {
 async function sidebar(context: CliContext): Promise<void> {
   const { adapter, session, tmux, config } = context;
 
-  await runSidebar({ adapter, session, tmux, viewCommand, bindings: config.keys });
+  await runSidebar({
+    adapter,
+    session,
+    tmux,
+    viewCommand,
+    bindings: config.keys,
+    chatOrder: config.chatOrder,
+  });
 }
 
 async function lines(context: CliContext): Promise<void> {

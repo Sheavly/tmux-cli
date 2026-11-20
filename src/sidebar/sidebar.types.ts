@@ -1,3 +1,5 @@
+import type { PromptTime } from '../chats/prompt-times.ts';
+import type { ChatOrder } from '../config/config.ts';
 import type { Group, Grouping } from '../files/commits.ts';
 import type {
   ChatChild,
@@ -112,6 +114,8 @@ export type SidebarState = {
   emptyLabelAt: Map<string, number>;
   /** The names the user gave chats. */
   names: Map<string, string>;
+  /** When each chat's last prompt was; filled only when chats are ordered by it. */
+  promptTimes: Map<string, PromptTime>;
 };
 
 /** What every screen of the sidebar works with. */
@@ -122,10 +126,14 @@ export type SidebarContext = {
   /** The shell command that shows one file. */
   viewCommand: (file: string) => string;
   bindings: Bindings;
+  /** How a folder's chats are ordered. */
+  chatOrder: ChatOrder;
   /** Whether the sidebar draws its own divider line. */
   divider: boolean;
   /** Where the names the user gave chats are kept. */
   namesFile: string;
+  /** Where the times of the last prompts are kept. */
+  promptTimesFile: string;
   /** Where the profile shown is kept. */
   stateFile: string;
   state: SidebarState;

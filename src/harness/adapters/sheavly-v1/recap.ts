@@ -1,10 +1,6 @@
-import path from 'node:path';
 import { cleanText } from '../../../terminal/text.ts';
 import type { RecapMessage } from '../../recap-text.ts';
-import { openIfExists } from './open-file.ts';
-
-/** How much of the end of the history is read, widening until enough messages are found. */
-const TAIL_BYTES = [256 * 1024, 1024 * 1024, 4 * 1024 * 1024];
+import { parseHistoryEntry, scanHistoryTail } from './history-tail.ts';
 
 /**
  * What one history line says for a recap: what the user typed, or what the assistant answered
@@ -12,17 +8,7 @@ const TAIL_BYTES = [256 * 1024, 1024 * 1024, 4 * 1024 * 1024];
  * part of the conversation you would remember.
  */
 export function parseRecapLine(line: string): RecapMessage | undefined {
-  let record: {
-    entry?: { role?: unknown; origin?: unknown; content?: unknown; toolCalls?: unknown };
-  };
-
-  try {
-    record = JSON.parse(line) as typeof record;
-  } catch {
-    return undefined;
-  }
-
-  const entry = record.entry;
+  const entry = parseHistoryEntry(line);
 
   if (!entry || typeof entry.content !== 'string') return undefined;
 
@@ -67,36 +53,16 @@ export function buildRecap(lines: readonly string[], limit: number): RecapMessag
 /** Reads only the end of the history, which can be megabytes. Empty when there is none yet. */
 export async function readRecap(params: { dir: string; limit: number }): Promise<RecapMessage[]> {
   const { dir, limit } = params;
-  const handle = await openIfExists(path.join(dir, 'history.jsonl'));
 
-  if (!handle) return [];
-
-  try {
-    const { size } = await handle.stat();
-    let messages: RecapMessage[] = [];
-
-    for (const bytes of TAIL_BYTES) {
-      const length = Math.min(bytes, size);
-      const buffer = Buffer.alloc(length);
-
-      await handle.read(buffer, 0, length, size - length);
-
-      const lines = buffer.toString('utf8').split('\n');
-
-      // Unless the whole file was read, the first line is cut off at its start.
-      if (length < size) lines.shift();
-
+  return scanHistoryTail<RecapMessage[]>({
+    dir,
+    none: [],
+    scan: (lines) => {
       // The oldest message of a window may be missing its first steps, so ask for one more than
       // is shown and drop it: the ones left are whole.
-      messages = buildRecap(lines, limit + 1);
+      const messages = buildRecap(lines, limit + 1);
 
-      if (length >= size) return messages.slice(-limit);
-
-      if (messages.length > limit) return messages.slice(-limit);
-    }
-
-    return messages.slice(-limit);
-  } finally {
-    await handle.close();
-  }
+      return { result: messages.slice(-limit), done: messages.length > limit };
+    },
+  });
 }

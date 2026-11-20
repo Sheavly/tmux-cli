@@ -1,3 +1,5 @@
+import type { PromptTime } from '../chats/prompt-times.ts';
+import type { ChatOrder } from '../config/config.ts';
 import type { ChatChild, StoredChat } from '../harness/adapter.types.ts';
 import { followKey } from '../session/follow-panes.ts';
 import { MAIN_SESSION, type PaneInfo } from '../session/panes.ts';
@@ -46,7 +48,20 @@ export type BuildInput = {
   panes: PaneInfo[];
   collapsed: ReadonlySet<string>;
   showAll: boolean;
+  /** What a folder's chats are ordered by; by when they began when not given. */
+  order?: ChatOrder;
+  /** When each chat's last prompt was, by conversation id; read only for the `prompted` order. */
+  promptTimes?: ReadonlyMap<string, PromptTime>;
 };
+
+/** A chat without a known prompt (a new one, or one not read yet) goes by when it began. */
+function orderKey(params: { chat: ChatRow; input: BuildInput }): number {
+  const { chat, input } = params;
+
+  if (input.order !== 'prompted') return chat.startedAt;
+
+  return input.promptTimes?.get(chat.chatId)?.at ?? chat.startedAt;
+}
 
 /** Stored chats shown per workspace before "N older"; running ones are always shown. */
 export const RECENT_STORED = 6;
@@ -129,7 +144,9 @@ function workspaceRows(params: { input: BuildInput; workspace: string; chats: Ch
 
   if (collapsed) return [header];
 
-  const sorted = chats.toSorted((a, b) => b.startedAt - a.startedAt);
+  const newestFirst = (a: ChatRow, b: ChatRow) =>
+    orderKey({ chat: b, input }) - orderKey({ chat: a, input });
+  const sorted = chats.toSorted(newestFirst);
   const active = sorted.filter((chat) => chat.state !== 'stored');
   const stored = sorted.filter((chat) => chat.state === 'stored');
   const shownStored = input.showAll ? stored : stored.slice(0, RECENT_STORED);
@@ -140,7 +157,7 @@ function workspaceRows(params: { input: BuildInput; workspace: string; chats: Ch
   return [
     header,
     ...[...active, ...shownStored]
-      .toSorted((a, b) => b.startedAt - a.startedAt)
+      .toSorted(newestFirst)
       .flatMap((chat) => [chat, ...childRows({ chat, input })]),
     ...more,
   ];

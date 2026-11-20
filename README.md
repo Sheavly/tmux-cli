@@ -130,6 +130,7 @@ chat's profile from the folder it is stored in.
   "harnessDir": "/home/you/harness",
   "mode": "built",
   "sidebarWidth": 34,
+  "chatOrder": "started",
   "escapeTime": 10,
   "lockTmux": true,
   "socket": "sheavly"
@@ -150,6 +151,13 @@ build the harness (once, and after it changes), in its folder:
 without a build says so in its pane. `"dev"` runs the source instead, for working on the harness itself: a change
 shows without building, at the cost of compiling on every start. `command` replaces either with a
 command of your own.
+
+`chatOrder` is the order of the chats inside a folder of the sidebar, newest first: `"started"`
+(default) by when the chat began, `"prompted"` by when you last sent it a prompt, so the chat you
+last wrote in is at the top of its folder. Only `"prompted"` reads the chats' histories (the end of
+each, once, then again only for a chat that changed) and keeps what it read in `prompt-times.json`
+next to the config file; a chat without a prompt, or one whose history can't be read, goes by
+when it began (or by the last time read).
 
 `escapeTime` is how long tmux waits (milliseconds, 0 to 500) after an `Esc` for the rest of a key. An
 Alt key reaches it as `Esc` and the key, so over a slow ssh connection a higher value (50 to 100)

@@ -10,6 +10,7 @@ import {
 import { claimNewChats } from './claim.ts';
 import { updateEdits } from './edits.ts';
 import { followChild } from './follow.ts';
+import { readLastPromptAt } from './last-prompt.ts';
 import { defaultCommand, parseLaunchMode } from './launch-command.utils.ts';
 import { recapChat } from './replay.ts';
 import { chromeRows, clearPromptKeys, promptText } from './screen.ts';
@@ -111,6 +112,10 @@ export function createSheavlyV1(options: SheavlyV1Options): HarnessAdapter {
 
     async chatLabel(chat) {
       return readChatLabel({ dir: dirOf(chat) });
+    },
+
+    async lastPromptAt(chat) {
+      return readLastPromptAt({ dir: dirOf(chat) });
     },
 
     async listProfiles() {

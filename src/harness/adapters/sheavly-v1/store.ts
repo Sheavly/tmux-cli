@@ -1,6 +1,7 @@
 import { readFile, readdir, rm, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { cleanLabel } from '../../../terminal/text.ts';
+import { parseHistoryEntry } from './history-tail.ts';
 import { filterListable } from './listable.ts';
 import { openIfExists } from './open-file.ts';
 
@@ -265,15 +266,7 @@ export function firstUserMessage(text: string): string {
 
 function userContent(line: string): string | undefined {
   // The last line of a truncated read is cut off, and an empty one is not a record.
-  let record: { entry?: { role?: unknown; origin?: unknown; content?: unknown } };
-
-  try {
-    record = JSON.parse(line) as typeof record;
-  } catch {
-    return undefined;
-  }
-
-  const entry = record.entry;
+  const entry = parseHistoryEntry(line);
 
   if (entry?.role !== 'user' || entry.origin !== 'user') return undefined;
 

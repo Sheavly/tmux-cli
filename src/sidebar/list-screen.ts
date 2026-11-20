@@ -33,6 +33,8 @@ export function rows(ctx: SidebarContext): Row[] {
     panes: panesOnProfile(state.panes, state.activeProfile),
     collapsed: state.collapsed,
     showAll: state.showAll,
+    order: ctx.chatOrder,
+    promptTimes: state.promptTimes,
   });
 }
 

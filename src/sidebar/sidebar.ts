@@ -1,7 +1,8 @@
 import os from 'node:os';
 import path from 'node:path';
 import { readNames } from '../chats/names.ts';
-import { configFilePath } from '../config/config.ts';
+import { readPromptTimes } from '../chats/prompt-times.ts';
+import { configFilePath, type ChatOrder } from '../config/config.ts';
 import type { HarnessAdapter } from '../harness/adapter.types.ts';
 import { defaultBindings, type Bindings } from '../keys/bindings.ts';
 import { readActiveProfile, stateFilePath } from '../profiles/active.ts';
@@ -41,6 +42,7 @@ function initialState(): SidebarState {
     loadingLabels: new Set(),
     emptyLabelAt: new Map(),
     names: new Map(),
+    promptTimes: new Map(),
   };
 }
 
@@ -60,22 +62,31 @@ export async function runSidebar(params: {
   viewCommand: (file: string) => string;
   /** Which keys do what; the defaults when not given. */
   bindings?: Bindings;
+  /** How a folder's chats are ordered; by when they began when not given. */
+  chatOrder?: ChatOrder;
 }): Promise<never> {
-  const { adapter, session, tmux, viewCommand, bindings = defaultBindings() } = params;
+  const {
+    adapter,
+    session,
+    tmux,
+    viewCommand,
+    bindings = defaultBindings(),
+    chatOrder = 'started',
+  } = params;
   const state = initialState();
   const divider = (await tmux.run(['show-options', '-gqv', DIVIDER_OPTION])).trim() === 'own';
-  const namesFile = path.join(
-    path.dirname(configFilePath(process.env, os.homedir())),
-    'names.json',
-  );
+  const configDir = path.dirname(configFilePath(process.env, os.homedir()));
+  const namesFile = path.join(configDir, 'names.json');
   const ctx: SidebarContext = {
     adapter,
     session,
     tmux,
     viewCommand,
     bindings,
+    chatOrder,
     divider,
     namesFile,
+    promptTimesFile: path.join(configDir, 'prompt-times.json'),
     stateFile: stateFilePath(),
     state,
     draw: () => {
@@ -89,6 +100,8 @@ export async function runSidebar(params: {
   } catch (caughtError) {
     state.message = (caughtError as Error).message;
   }
+
+  if (chatOrder === 'prompted') state.promptTimes = await readPromptTimes(ctx.promptTimesFile);
 
   startFullScreen({
     onKey: (key) => handleKey(ctx, key),

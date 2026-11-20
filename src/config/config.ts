@@ -10,7 +10,14 @@ import {
   type KeyOverrides,
 } from '../keys/bindings.ts';
 
+/** How a folder's chats are ordered: newest first by when they began, or by their last prompt. */
+export type ChatOrder = 'started' | 'prompted';
+
+const CHAT_ORDERS: readonly string[] = ['started', 'prompted'] satisfies ChatOrder[];
+
 export type Config = {
+  /** The order of the chats inside a folder of the sidebar. */
+  chatOrder: ChatOrder;
   /** Our keys: the defaults, with what the file's `keys` changes. */
   keys: Bindings;
   /** What the changed keys can no longer do; starting asks the user to accept it. */
@@ -46,6 +53,7 @@ const FILE_KEYS = [
   'adapter',
   ...ADAPTER_KEYS,
   'sidebarWidth',
+  'chatOrder',
   'escapeTime',
   'lockTmux',
   'socket',
@@ -87,6 +95,7 @@ export function loadConfig(
       }),
     ),
     sidebarWidth: file.sidebarWidth ?? 34,
+    chatOrder: file.chatOrder ?? 'started',
     escapeTime: file.escapeTime,
     lockTmux: file.lockTmux ?? true,
     socket: file.socket ?? 'sheavly',
@@ -103,6 +112,7 @@ type FileConfig = {
   mode?: string;
   command?: string;
   sidebarWidth?: number;
+  chatOrder?: ChatOrder;
   escapeTime?: number;
   lockTmux?: boolean;
   socket?: string;
@@ -141,6 +151,13 @@ function parseConfigFile(params: { file: string; text: string }): FileConfig {
     ...stringField({ file, record, key: 'mode' }),
     ...stringField({ file, record, key: 'socket' }),
     ...numberField({ file, record, key: 'sidebarWidth', min: 16, max: 120 }),
+    ...optionalField({
+      file,
+      record,
+      key: 'chatOrder',
+      accepts: (value) => typeof value === 'string' && CHAT_ORDERS.includes(value),
+      wanted: '"started" or "prompted"',
+    }),
     ...numberField({ file, record, key: 'escapeTime', min: 0, max: 500 }),
     ...(record.keys === undefined ? {} : { keys: parseKeyOverrides({ file, value: record.keys }) }),
     ...booleanField({ file, record, key: 'acceptUnboundKeys' }),

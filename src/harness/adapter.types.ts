@@ -89,6 +89,12 @@ export type HarnessAdapter = {
   /** What the chat is about (shown in the list); empty when it has no message yet. */
   chatLabel: (chat: StoredChat) => Promise<string>;
   /**
+   * When the user last typed a prompt in the chat, in epoch milliseconds; undefined when it has
+   * none. Called only when the user asked for chats ordered by it, since it reads the history.
+   * Left out when the harness can't tell, and then chats are ordered by when they began.
+   */
+  lastPromptAt?: (chat: StoredChat) => Promise<number | undefined>;
+  /**
    * How to start a new chat in a folder, or resume a stored one. A new chat starts on `profile`
    * when one is given; a resumed chat keeps the profile it was started on, so it is not asked.
    */

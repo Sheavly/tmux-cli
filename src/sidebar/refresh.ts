@@ -1,6 +1,7 @@
 import { MAIN_SESSION, listPanes, pendingChats, type PaneInfo } from '../session/panes.ts';
 import { refreshChildren } from './children-refresh.ts';
 import { refreshEdits } from './files-screen.ts';
+import { loadPromptTimes } from './prompt-times.ts';
 import { settleProfile } from './profiles-screen.ts';
 import type { Focus } from './render.ts';
 import { CHAT_REFRESH_EVERY } from './sidebar.constants.ts';
@@ -39,6 +40,7 @@ export async function refresh(ctx: SidebarContext): Promise<void> {
 
       state.chats = listing.chats;
       state.problems = listing.problems;
+      await loadPromptTimes(ctx);
       await settleProfile(ctx);
     }
 
