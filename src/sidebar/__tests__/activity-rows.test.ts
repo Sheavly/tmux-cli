@@ -4,7 +4,7 @@ import type { ChatActivity, StoredChat } from '../../harness/adapter.types.ts';
 import { MAIN_SESSION } from '../../session/panes.ts';
 import { fakePane } from '../../testing/pane.fake.ts';
 import { SPINNER_FRAME_MS, SPINNER_FRAMES } from '../../terminal/spinner.constants.ts';
-import { renderScreen } from '../render.ts';
+import { activityCount, renderScreen } from '../render.ts';
 import { buildRows, type Row } from '../view.ts';
 
 const stored: StoredChat[] = [{ id: 'c1', workspace: '/a', startedAt: 10, updatedAt: 10 }];
@@ -63,6 +63,26 @@ test('a chat that waits for the user shows a question mark', () => {
 test('an idle chat keeps the dot of a running one', () => {
   assert.match(chatLine(rowsWith({ activity: 'idle' }), 0), /● my chat/);
   assert.match(chatLine(rowsWith({}), 0), /● my chat/);
+});
+
+test('a footer line with the count of a status keeps its colour and is as wide as the screen', () => {
+  const count = activityCount({ activity: 'awaiting_input', count: 2, now: 0 });
+  const { lines } = renderScreen({
+    rows: [],
+    cursor: 0,
+    scrollTop: 0,
+    width: 20,
+    height: 4,
+    now: 0,
+    home: '/home/me',
+    footer: [`Work ${count}`],
+    divider: false,
+    focus: 'sidebar',
+  });
+  const footerLine = lines[3] as string;
+
+  assert.match(footerLine, /\u001b\[33m/);
+  assert.equal(strip(footerLine), 'Work ?2'.padEnd(20));
 });
 
 test('a working chat shows a spinner that turns with the clock', () => {

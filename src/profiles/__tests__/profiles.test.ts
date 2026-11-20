@@ -3,7 +3,7 @@ import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { test } from 'node:test';
-import type { ProfileInfo, StoredChat } from '../../harness/adapter.types.ts';
+import type { ChatActivity, ProfileInfo, StoredChat } from '../../harness/adapter.types.ts';
 import type { PaneInfo } from '../../session/panes.ts';
 import { fakePane } from '../../testing/pane.fake.ts';
 import {
@@ -18,10 +18,10 @@ import {
   chatsOnProfile,
   chooseProfile,
   countByProfile,
-  elsewhereHint,
+  elsewhereStatuses,
   panesOnProfile,
   profileItem,
-  runningElsewhere,
+  type ProfileStatuses,
 } from '../profiles.ts';
 
 const profiles: ProfileInfo[] = [
@@ -77,25 +77,55 @@ test('a starting chat is listed on its own profile only, and one with no profile
   assert.equal(panesOnProfile(panes, '').length, 4);
 });
 
-test('chats running on other profiles are counted, an ended one and an unknown one are not', () => {
-  const chats = [chat('a', 'aws'), chat('b', 'azure')];
+test('the summary counts each status of the chats running on other profiles, leaving out zeros', () => {
+  const chats = [chat('a', 'aws'), chat('b', 'azure'), chat('c', 'azure'), chat('d', 'azure')];
   const panes = [
     pane({ id: '%1', chat: 'a' }),
     pane({ id: '%2', chat: 'b' }),
-    pane({ id: '%3', chat: 'b', dead: true }),
-    pane({ id: '%4', profile: 'azure' }),
-    pane({ id: '%5' }),
-    pane({ id: '%6', role: 'placeholder', profile: 'azure' }),
+    pane({ id: '%3', chat: 'c' }),
+    pane({ id: '%4', chat: 'd', dead: true }),
+    pane({ id: '%5', profile: 'azure' }),
+    pane({ id: '%6' }),
+    pane({ id: '%7', role: 'placeholder', profile: 'azure' }),
   ];
+  const activity = new Map<string, ChatActivity>([
+    ['a', 'running'],
+    ['b', 'awaiting_input'],
+    ['c', 'running'],
+  ]);
+  const summary = (active: string): ProfileStatuses[] =>
+    elsewhereStatuses({ profiles, panes, chats, activity, active });
 
-  assert.equal(runningElsewhere({ panes, chats, active: 'aws' }), 2);
-  assert.equal(runningElsewhere({ panes, chats, active: '' }), 0);
+  // %5 is starting, so it has no activity yet and counts as idle; the dead pane and the rest don't.
+  assert.deepEqual(summary('aws'), [
+    {
+      name: 'Work',
+      counts: [
+        { activity: 'awaiting_input', count: 1 },
+        { activity: 'running', count: 1 },
+        { activity: 'idle', count: 1 },
+      ],
+    },
+  ]);
+  assert.deepEqual(summary('azure'), [
+    { name: 'Amazon', counts: [{ activity: 'running', count: 1 }] },
+  ]);
+  assert.deepEqual(summary(''), []);
 });
 
-test('the hint says how many chats run elsewhere', () => {
-  assert.equal(elsewhereHint(0), '');
-  assert.equal(elsewhereHint(1), '1 chat running on another profile');
-  assert.equal(elsewhereHint(3), '3 chats running on other profiles');
+test('the summary is empty when nothing runs on the other profiles', () => {
+  const chats = [chat('a', 'aws')];
+
+  assert.deepEqual(
+    elsewhereStatuses({
+      profiles,
+      panes: [pane({ chat: 'a' })],
+      chats,
+      activity: new Map(),
+      active: 'aws',
+    }),
+    [],
+  );
 });
 
 test('the selector lists each profile with its chats and what is running', () => {

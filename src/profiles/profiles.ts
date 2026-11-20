@@ -1,4 +1,4 @@
-import type { ProfileInfo, StoredChat } from '../harness/adapter.types.ts';
+import type { ChatActivity, ProfileInfo, StoredChat } from '../harness/adapter.types.ts';
 import type { PaneInfo } from '../session/panes.ts';
 
 /**
@@ -48,34 +48,49 @@ function profileOfPane(pane: PaneInfo, chats: ReadonlyMap<string, StoredChat>): 
   return (pane.chat ? chats.get(pane.chat)?.profile : undefined) ?? pane.profile;
 }
 
-/** How many chats are running (not ended) on a profile other than the active one. */
-export function runningElsewhere(params: {
+/** What is running on one profile: how many chats are in each status, none of them 0. */
+export type ProfileStatuses = { name: string; counts: { activity: ChatActivity; count: number }[] };
+
+const ACTIVITY_ORDER: ChatActivity[] = ['awaiting_input', 'running', 'idle'];
+
+/**
+ * What the sidebar says about chats running where they are not listed: each other profile with
+ * running chats and how many are in each status. A running chat whose activity is not known (it is
+ * starting, or the harness doesn't say) counts as idle. Empty for none, or with no active profile.
+ */
+export function elsewhereStatuses(params: {
+  profiles: readonly ProfileInfo[];
   panes: readonly PaneInfo[];
   chats: readonly StoredChat[];
+  activity: ReadonlyMap<string, ChatActivity>;
   active: string;
-}): number {
-  const { panes, active } = params;
+}): ProfileStatuses[] {
+  const { profiles, panes, activity, active } = params;
 
-  if (active === '') return 0;
+  if (active === '') return [];
 
   const stored = new Map(params.chats.map((chat) => [chat.id, chat]));
+  const result: ProfileStatuses[] = [];
 
-  return panes.filter((pane) => {
-    if (pane.role !== 'chat' || pane.dead) return false;
+  for (const profile of profiles) {
+    if (profile.id === active) continue;
 
-    const profile = profileOfPane(pane, stored);
+    const tally = { awaiting_input: 0, running: 0, idle: 0 };
 
-    return profile !== '' && profile !== active;
-  }).length;
-}
+    for (const pane of panes) {
+      if (pane.role !== 'chat' || pane.dead || profileOfPane(pane, stored) !== profile.id) continue;
 
-/** What the sidebar says about chats running where they are not listed. Empty for none. */
-export function elsewhereHint(count: number): string {
-  if (count <= 0) return '';
+      tally[activity.get(pane.chat) ?? 'idle'] += 1;
+    }
 
-  return count === 1
-    ? '1 chat running on another profile'
-    : `${count} chats running on other profiles`;
+    const counts = ACTIVITY_ORDER.map((each) => ({ activity: each, count: tally[each] })).filter(
+      (each) => each.count > 0,
+    );
+
+    if (counts.length > 0) result.push({ name: profile.name, counts });
+  }
+
+  return result;
 }
 
 export type ProfileCount = { profile: ProfileInfo; chats: number; running: number };

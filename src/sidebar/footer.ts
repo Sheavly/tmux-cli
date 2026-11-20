@@ -1,6 +1,7 @@
-import { elsewhereHint, runningElsewhere } from '../profiles/profiles.ts';
+import { elsewhereStatuses } from '../profiles/profiles.ts';
 import { footerHints, hintKey } from './help.ts';
 import { helpMaxLeft, helpMaxTop } from './help-view.ts';
+import { activityCount } from './render.ts';
 import { truncateLine } from './screen.ts';
 import type { SidebarContext } from './sidebar.types.ts';
 import { takeLastColumns } from '../terminal/width.utils.ts';
@@ -94,19 +95,34 @@ function plainFooter(ctx: SidebarContext): string[] {
  * when it has nothing else to say, otherwise on a line of its own.
  */
 function listFooter(ctx: SidebarContext): string[] {
-  const { state, bindings } = ctx;
+  const { bindings } = ctx;
   const width = process.stdout.columns;
-  const elsewhere = elsewhereHint(
-    runningElsewhere({ panes: state.panes, chats: state.chats, active: state.activeProfile }),
-  );
+  const elsewhere = elsewhereLine(ctx);
   const status = footerStatus(ctx);
   const helpHint = footerHints.list(bindings);
 
   if (!elsewhere) return [truncateLine(status, width), helpHint];
 
-  return status
-    ? [truncateLine(status, width), truncateLine(elsewhere, width), helpHint]
-    : [truncateLine(elsewhere, width), helpHint];
+  // The line has colours in it, which the screen measures and cuts to the width itself.
+  return status ? [truncateLine(status, width), elsewhere, helpHint] : [elsewhere, helpHint];
+}
+
+/** The other profiles with their running chats by status, like `Work ?1 ⠋2 ●1 · Home ●3`; empty for none. */
+function elsewhereLine(ctx: SidebarContext): string {
+  const { state } = ctx;
+  const now = Date.now();
+
+  return elsewhereStatuses({
+    profiles: state.profiles,
+    panes: state.panes,
+    chats: state.chats,
+    activity: state.activity,
+    active: state.activeProfile,
+  })
+    .map(({ name, counts }) =>
+      [name, ...counts.map((each) => activityCount({ ...each, now }))].join(' '),
+    )
+    .join(' · ');
 }
 
 function footerStatus(ctx: SidebarContext): string {

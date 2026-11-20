@@ -1,4 +1,6 @@
+import type { ChatActivity } from '../harness/adapter.types.ts';
 import { SPINNER_FRAME_MS, SPINNER_FRAMES } from '../terminal/spinner.constants.ts';
+import { fitStyled, keepStyles } from '../terminal/ansi.ts';
 import { relativeTime, type ChatState, type Row } from './view.ts';
 import {
   displayWidth,
@@ -110,7 +112,7 @@ export function renderScreen(screen: Screen): {
   });
   const blank = ' '.repeat(inner.width);
   const filler = Array.from({ length: Math.max(0, visible - body.length) }, () => blank);
-  const footerLines = footer.map((line) => padRight(line, inner.width));
+  const footerLines = footer.map((line) => fitFooterLine(line, inner.width));
   const lines = [...titleLines, ...body, ...filler, ...footerLines].slice(0, height);
 
   const marked = lines.map((line, index) =>
@@ -274,24 +276,40 @@ function renderChild(params: { row: Extract<Row, { kind: 'child' }>; width: numb
 }
 
 /**
- * The dot of a chat row. A chat that is working shows the loader's spinner, at the frame the clock
- * is at, so every row turns together; one that waits for the user shows a yellow `?`.
+ * The symbol of what a running chat is doing. A chat that is working shows the loader's spinner,
+ * at the frame the clock is at, so everything that turns does so together; one that waits for the
+ * user shows a yellow `?`; an idle one the dot of a running chat.
  */
+function activityMarker(activity: ChatActivity, now: number): (typeof MARKERS)[ChatState] {
+  if (activity === 'awaiting_input') return { symbol: '?', color: style.yellow + style.bold };
+
+  if (activity === 'running') {
+    const frame = Math.floor(now / SPINNER_FRAME_MS) % SPINNER_FRAMES.length;
+
+    return { symbol: SPINNER_FRAMES[frame] as string, color: style.green };
+  }
+
+  return MARKERS.running;
+}
+
+/** A status symbol with a count beside it, coloured as in the list; for a line that is not a row. */
+export function activityCount(params: {
+  activity: ChatActivity;
+  count: number;
+  now: number;
+}): string {
+  const { symbol, color } = activityMarker(params.activity, params.now);
+
+  return `${color}${symbol}${params.count}${style.reset}`;
+}
+
 function markerOf(params: {
   row: Extract<Row, { kind: 'chat' }>;
   now: number;
 }): (typeof MARKERS)[ChatState] {
   const { row, now } = params;
 
-  if (row.activity === 'awaiting_input') return { symbol: '?', color: style.yellow + style.bold };
-
-  if (row.activity === 'running') {
-    const frame = Math.floor(now / SPINNER_FRAME_MS) % SPINNER_FRAMES.length;
-
-    return { symbol: SPINNER_FRAMES[frame] as string, color: style.green };
-  }
-
-  return MARKERS[row.state];
+  return row.activity ? activityMarker(row.activity, now) : MARKERS[row.state];
 }
 
 function isOnScreen(row: Row): boolean {
@@ -335,6 +353,14 @@ export function truncate(text: string, width: number): string {
 
 function padRight(text: string, width: number): string {
   return fitColumns(text, width);
+}
+
+/**
+ * A footer line as exactly `width` columns. Most are plain text, measured as it is; a line with
+ * colours in it is measured without them, and anything else it carries but colours is dropped.
+ */
+function fitFooterLine(line: string, width: number): string {
+  return line.includes(ESC) ? fitStyled(keepStyles(line), width) : padRight(line, width);
 }
 
 export const screenCodes = {
