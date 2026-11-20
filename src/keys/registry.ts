@@ -14,6 +14,7 @@ export type Mode =
   | 'list'
   | 'browser'
   | 'profiles'
+  | 'move'
   | 'files'
   | 'rename'
   | 'search'
@@ -186,6 +187,7 @@ export const ACTIONS = [
   { id: 'list.search', keys: ['s'], modes: ['list'], description: 'search chats by name' },
   { id: 'list.files', keys: ['f'], modes: ['list'], description: 'files the chat changed' },
   { id: 'list.rename', keys: ['R'], modes: ['list'], description: 'rename chat' },
+  { id: 'list.move', keys: ['m'], modes: ['list'], description: 'move folder' },
   { id: 'list.showAll', keys: ['a'], modes: ['list'], description: 'show all chats' },
   { id: 'list.stop', keys: ['x'], modes: ['list'], description: 'stop chat' },
   { id: 'list.delete', keys: ['Delete'], modes: ['list'], description: 'delete chat' },
@@ -203,6 +205,22 @@ export const ACTIONS = [
     modes: ['list'],
     description: 'stop all chats and quit',
     critical: true,
+  },
+
+  // moving a folder
+  { id: 'move.up', keys: ['Up', 'k'], modes: ['move'], description: 'move the folder up' },
+  { id: 'move.down', keys: ['Down', 'j'], modes: ['move'], description: 'move the folder down' },
+  {
+    id: 'move.unpin',
+    keys: ['u'],
+    modes: ['move'],
+    description: 'back to alphabetical order',
+  },
+  {
+    id: 'move.done',
+    keys: ['Enter', 'Escape', 'm'],
+    modes: ['move'],
+    description: 'leave the folder where it is',
   },
 
   // choosing a folder for a new chat

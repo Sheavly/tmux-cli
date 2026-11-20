@@ -61,12 +61,16 @@ character is always typed, so a letter bound to a motion only works on the other
 | `list.search`                                                               | `s`                                | search chats by name: Enter selects, Esc cancels            |
 | `list.files`                                                                | `f`                                | files the chat changed                                      |
 | `list.rename`                                                               | `R`                                | rename chat                                                 |
+| `list.move`                                                                 | `m`                                | move the folder: it is pinned above the alphabetical ones   |
 | `list.showAll`                                                              | `a`                                | show all chats                                              |
 | `list.stop`                                                                 | `x`                                | stop chat                                                   |
 | `list.delete`                                                               | `Delete`                           | delete chat                                                 |
 | `list.redraw`                                                               | `r`                                | redraw                                                      |
 | `list.detach`                                                               | `q`                                | detach (chats keep running)                                 |
 | `list.quitAll`                                                              | `Q`                                | stop all chats and quit                                     |
+| `move.up` `down`                                                            | `Up` `k` / `Down` `j`              | move the pinned folder                                      |
+| `move.unpin`                                                                | `u`                                | back to alphabetical order                                  |
+| `move.done`                                                                 | `Enter` `Escape` `m`               | leave the folder where it is                                |
 | `browser.parent`                                                            | `Left` `h` `BSpace`                | up a folder                                                 |
 | `browser.into`                                                              | `Right` `l`                        | go into the folder                                          |
 | `browser.cancel`                                                            | `Escape` `q`                       | cancel                                                      |

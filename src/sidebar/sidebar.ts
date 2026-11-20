@@ -1,5 +1,6 @@
 import os from 'node:os';
 import path from 'node:path';
+import { readFolderOrder } from '../chats/folder-order.ts';
 import { readNames } from '../chats/names.ts';
 import { readPromptTimes } from '../chats/prompt-times.ts';
 import { configFilePath, type ChatOrder } from '../config/config.ts';
@@ -47,6 +48,7 @@ function initialState(): SidebarState {
     emptyLabelAt: new Map(),
     names: new Map(),
     promptTimes: new Map(),
+    folderOrder: [],
   };
 }
 
@@ -94,6 +96,7 @@ export async function runSidebar(params: {
     mouse,
     divider,
     namesFile,
+    folderOrderFile: path.join(configDir, 'folder-order.json'),
     promptTimesFile: path.join(configDir, 'prompt-times.json'),
     stateFile: stateFilePath(),
     state,
@@ -105,6 +108,7 @@ export async function runSidebar(params: {
 
   try {
     state.names = await readNames(namesFile);
+    state.folderOrder = await readFolderOrder(ctx.folderOrderFile);
   } catch (caughtError) {
     state.message = (caughtError as Error).message;
   }

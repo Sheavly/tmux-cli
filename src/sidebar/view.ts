@@ -3,11 +3,20 @@ import type { ChatOrder } from '../config/config.ts';
 import type { ChatChild, StoredChat } from '../harness/adapter.types.ts';
 import { followKey } from '../session/follow-panes.ts';
 import { MAIN_SESSION, type PaneInfo } from '../session/panes.ts';
+import { orderFolders } from './folder-order.utils.ts';
 
 export type ChatState = 'shown' | 'running' | 'ended' | 'starting' | 'stored';
 
 export type Row =
-  | { kind: 'workspace'; key: string; workspace: string; count: number; collapsed: boolean }
+  | {
+      kind: 'workspace';
+      key: string;
+      workspace: string;
+      count: number;
+      collapsed: boolean;
+      /** Whether the user moved this folder, so it is where they put it and not alphabetical. */
+      pinned?: boolean;
+    }
   | {
       kind: 'chat';
       key: string;
@@ -48,6 +57,8 @@ export type BuildInput = {
   panes: PaneInfo[];
   collapsed: ReadonlySet<string>;
   showAll: boolean;
+  /** The folders the user moved, in order; they come before the rest, which are alphabetical. */
+  folderOrder?: readonly string[];
   /** What a folder's chats are ordered by; by when they began when not given. */
   order?: ChatOrder;
   /** When each chat's last prompt was, by conversation id; read only for the `prompted` order. */
@@ -68,10 +79,16 @@ export const RECENT_STORED = 6;
 
 export function buildRows(input: BuildInput): Row[] {
   const groups = groupByWorkspace(input);
+  const pinned = input.folderOrder ?? [];
 
-  return [...groups.entries()]
-    .toSorted(([a], [b]) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
-    .flatMap(([workspace, chats]) => workspaceRows({ input, workspace, chats }));
+  // A folder the user moved stays listed with no chats, so it is not lost until unpinned.
+  for (const folder of pinned) {
+    if (!groups.has(folder)) groups.set(folder, []);
+  }
+
+  return orderFolders({ folders: [...groups.keys()], pinned }).flatMap((workspace) =>
+    workspaceRows({ input, workspace, chats: groups.get(workspace) ?? [] }),
+  );
 }
 
 function groupByWorkspace(input: BuildInput): Map<string, ChatRow[]> {
@@ -140,6 +157,7 @@ function workspaceRows(params: { input: BuildInput; workspace: string; chats: Ch
     workspace,
     count: chats.length,
     collapsed,
+    pinned: input.folderOrder?.includes(workspace) ?? false,
   };
 
   if (collapsed) return [header];

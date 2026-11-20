@@ -71,6 +71,13 @@ export const footerHints = {
       [['text.submit'], 'go'],
       [['text.cancel'], 'cancel'],
     ]),
+  /** What can be done while placing a folder. */
+  move: (bindings: Bindings): string =>
+    hints(bindings, [
+      [['move.up', 'move.down'], 'move'],
+      [['move.unpin'], 'unpin'],
+      [['move.done'], 'done'],
+    ]),
   profiles: (bindings: Bindings): string =>
     hints(bindings, [
       [['navigation.open'], 'switch'],
@@ -136,7 +143,7 @@ export function listHelp(options: HelpOptions): string[] {
       'list.browseFolder',
     ]),
     ...(options.profiles ? some(['list.profiles', 'list.nextProfile']) : []),
-    ...some(['list.search', 'list.rename', 'list.stop']),
+    ...some(['list.search', 'list.rename', 'list.move', 'list.stop']),
     ...(options.deleting ? some(['list.delete']) : []),
     ...some(['list.showAll', 'list.redraw', 'list.detach', 'list.quitAll']),
     ...(options.files ? some(['list.files']) : []),

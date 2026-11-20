@@ -3,6 +3,7 @@ import { handleFiles } from './files-screen.ts';
 import { handleHelp } from './help-screen.ts';
 import type { Key } from './keys.ts';
 import { handleList, rows } from './list-screen.ts';
+import { handleMove } from './move-screen.ts';
 import { handleProfiles } from './profiles-screen.ts';
 import { handleConfirmDelete, handleConfirmQuit, handleRename } from './prompts.ts';
 import { handleSearch } from './search-screen.ts';
@@ -27,6 +28,9 @@ async function dispatch(ctx: SidebarContext, key: Key): Promise<void> {
       break;
     case 'browse':
       await handleBrowse(ctx, key, mode);
+      break;
+    case 'move':
+      await handleMove(ctx, key, mode, rows(ctx));
       break;
     case 'rename':
       await handleRename(ctx, key, mode);

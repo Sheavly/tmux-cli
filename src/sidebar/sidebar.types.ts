@@ -69,6 +69,8 @@ export type Mode =
   | Browser
   | ProfilesView
   | FilesView
+  /** Placing a folder among the ones the user moved; the list is drawn as usual. */
+  | { kind: 'move'; workspace: string }
   | { kind: 'rename'; chatId: string; text: string }
   /** Typing a chat's name to put the cursor on it; `origin` is the cursor key to go back to. */
   | { kind: 'search'; query: string; origin: string }
@@ -119,6 +121,8 @@ export type SidebarState = {
   names: Map<string, string>;
   /** When each chat's last prompt was; filled only when chats are ordered by it. */
   promptTimes: Map<string, PromptTime>;
+  /** The folders the user moved, in order; they come before the alphabetical ones. */
+  folderOrder: string[];
 };
 
 /** What every screen of the sidebar works with. */
@@ -137,6 +141,8 @@ export type SidebarContext = {
   divider: boolean;
   /** Where the names the user gave chats are kept. */
   namesFile: string;
+  /** Where the order of the folders the user moved is kept. */
+  folderOrderFile: string;
   /** Where the times of the last prompts are kept. */
   promptTimesFile: string;
   /** Where the profile shown is kept. */

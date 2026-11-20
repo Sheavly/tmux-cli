@@ -8,6 +8,7 @@ import { footer } from './footer.ts';
 import { showHelp } from './help-screen.ts';
 import type { Key } from './keys.ts';
 import { loadMissingLabels } from './labels.ts';
+import { startMove } from './move-screen.ts';
 import { moveFor } from './navigation.utils.ts';
 import {
   activeProfileName,
@@ -33,6 +34,7 @@ export function rows(ctx: SidebarContext): Row[] {
     panes: panesOnProfile(state.panes, state.activeProfile),
     collapsed: state.collapsed,
     showAll: state.showAll,
+    folderOrder: state.folderOrder,
     order: ctx.chatOrder,
     promptTimes: state.promptTimes,
   });
@@ -208,6 +210,7 @@ const LIST_ACTIONS: Partial<Record<ActionId, ListAction>> = {
   'list.rename': (ctx, row) => {
     startRename(ctx, row);
   },
+  'list.move': (ctx, row) => startMove(ctx, row),
   'list.showAll': (ctx) => {
     ctx.state.showAll = !ctx.state.showAll;
   },

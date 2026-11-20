@@ -234,8 +234,9 @@ function renderRow(params: { row: Row; screen: Screen; selected: boolean }): str
 
   if (row.kind === 'workspace') {
     const arrow = row.collapsed ? '▸' : '▾';
-    const name = shortPath({ path: row.workspace, home: screen.home, max: width - 8 });
-    const text = padRight(` ${arrow} ${name} (${row.count})`, width);
+    const name = shortPath({ path: row.workspace, home: screen.home, max: width - 10 });
+    const pin = row.pinned ? ' *' : '';
+    const text = padRight(` ${arrow} ${name} (${row.count})${pin}`, width);
 
     return `${style.bold}${text}${style.reset}`;
   }

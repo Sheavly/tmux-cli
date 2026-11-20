@@ -53,12 +53,19 @@
       "search": "s",
       "files": "f",
       "rename": "R",
+      "move": "m",
       "showAll": "a",
       "stop": "x",
       "delete": "Delete",
       "redraw": "r",
       "detach": "q",
       "quitAll": "Q"
+    },
+    "move": {
+      "up": ["Up", "k"],
+      "down": ["Down", "j"],
+      "unpin": "u",
+      "done": ["Enter", "Escape", "m"]
     },
     "browser": {
       "parent": ["Left", "h", "BSpace"],

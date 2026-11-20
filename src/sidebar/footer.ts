@@ -26,6 +26,8 @@ export function footer(ctx: SidebarContext): string[] {
     return [truncateLine(typed, width), footerHints.search(bindings)];
   }
 
+  if (mode.kind === 'move' || mode.kind === 'confirm-quit') return plainFooter(ctx);
+
   if (mode.kind === 'help') {
     return [
       '',
@@ -41,10 +43,6 @@ export function footer(ctx: SidebarContext): string[] {
       truncateLine(`Delete "${mode.row.label}"?`, width),
       footerHints.confirmDelete(bindings),
     ];
-  }
-
-  if (mode.kind === 'confirm-quit') {
-    return ['Stop every chat and quit?', footerHints.confirmQuit(bindings)];
   }
 
   if (mode.kind === 'files') {
@@ -78,6 +76,17 @@ export function footer(ctx: SidebarContext): string[] {
   if (mode.kind === 'profiles') return ['', footerHints.profiles(bindings)];
 
   return listFooter(ctx);
+}
+
+/** The footers that are a fixed line and the keys that work: placing a folder, and the quit question. */
+function plainFooter(ctx: SidebarContext): string[] {
+  const { bindings } = ctx;
+
+  if (ctx.state.mode.kind === 'move') {
+    return ['Moving folder (pinned *)', footerHints.move(bindings)];
+  }
+
+  return ['Stop every chat and quit?', footerHints.confirmQuit(bindings)];
 }
 
 /**

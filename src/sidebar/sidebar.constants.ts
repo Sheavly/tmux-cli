@@ -9,6 +9,7 @@ export const MODE_NAMES = {
   list: 'list',
   browse: 'browser',
   profiles: 'profiles',
+  move: 'move',
   files: 'files',
   rename: 'rename',
   search: 'search',
