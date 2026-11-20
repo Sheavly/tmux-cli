@@ -45,6 +45,13 @@ export const ACTIONS = [
     critical: true,
   },
   {
+    id: 'global.detach',
+    keys: ['M-Q'],
+    modes: ['global'],
+    description: 'detach from anywhere (chats keep running)',
+    critical: true,
+  },
+  {
     id: 'global.scrollBack',
     keys: ['PageUp'],
     modes: ['global'],

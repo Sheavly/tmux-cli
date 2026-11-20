@@ -2,7 +2,7 @@ import type { Bindings } from '../keys/bindings.ts';
 import type { ActionId } from '../keys/registry.ts';
 import { shellQuote, type Tmux } from '../tmux/tmux.ts';
 import { COPY_TABLES, copyModeBindings } from './copy-mode.ts';
-import { LINES_PANE_OPTION } from './panes.ts';
+import { LINES_PANE_OPTION, MAIN_SESSION } from './panes.ts';
 
 /** The server option that lists the keys the last start bound, as `table:key` and a space. */
 const BOUND_OPTION = '@sheavly_bound_keys';
@@ -94,6 +94,9 @@ export function rootBindings(params: { bindings: Bindings; commands: KeyCommands
       'global.scrollBack',
       (key) => ['if-shell', '-F', '#{alternate_on}', `send-keys ${key}`, 'copy-mode -eu'],
     ],
+    // A way out that does not depend on the sidebar process, which holds the `q` key and may be
+    // dead.
+    ['global.detach', () => ['detach-client', '-s', MAIN_SESSION]],
     // Two panes, so the next one is always the other.
     ['global.togglePane', () => ['select-pane', '-t', ':.+']],
     // Straight into copy mode at the newest line, for when there is no need to go to a numbered

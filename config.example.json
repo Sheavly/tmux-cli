@@ -8,6 +8,7 @@
   "acceptUnboundKeys": false,
   "keys": {
     "global": {
+      "detach": "M-Q",
       "togglePane": "M-s",
       "scrollBack": "PageUp",
       "copyNewest": "M-c",

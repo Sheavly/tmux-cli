@@ -176,6 +176,7 @@ test('the help screen, the questions, the popup and the viewer keep their keys',
 
 test('the tmux keys keep what they were bound to', () => {
   assert.deepEqual(defaults.keys('global.togglePane'), ['M-s']);
+  assert.deepEqual(defaults.keys('global.detach'), ['M-Q']);
   assert.deepEqual(defaults.keys('global.scrollBack'), ['PageUp']);
   assert.deepEqual(defaults.keys('global.copyNewest'), ['M-c']);
   assert.deepEqual(defaults.keys('global.copyLines'), ['M-g']);

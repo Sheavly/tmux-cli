@@ -36,6 +36,7 @@ character is always typed, so a letter bound to a motion only works on the other
 
 | Action                                                                      | Default                            | Does                                                        |
 | --------------------------------------------------------------------------- | ---------------------------------- | ----------------------------------------------------------- |
+| `global.detach`                                                             | `M-Q`                              | detach from any pane, even if the sidebar died              |
 | `global.togglePane`                                                         | `M-s`                              | switch between sidebar and chat                             |
 | `global.scrollBack`                                                         | `PageUp`                           | scroll back in the chat                                     |
 | `global.copyNewest`                                                         | `M-c`                              | copy mode at the newest line                                |

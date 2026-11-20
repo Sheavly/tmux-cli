@@ -16,7 +16,13 @@ const rootFor = (value: unknown, given: KeyCommands = commands) =>
 const keysOf = (bindings: { key: string }[]): string[] => bindings.map((binding) => binding.key);
 
 test('with the default keys the root table has the keys it always had', () => {
-  assert.deepEqual(keysOf(rootFor({})), ['PageUp', 'M-s', 'M-c', 'Escape', 'M-g']);
+  assert.deepEqual(keysOf(rootFor({})), ['PageUp', 'M-Q', 'M-s', 'M-c', 'Escape', 'M-g']);
+});
+
+test('the detach key works in any pane, so it does not depend on the sidebar being alive', () => {
+  const [detach] = rootFor({}).filter((binding) => binding.key === 'M-Q');
+
+  assert.deepEqual(detach?.command, ['detach-client', '-s', 'sheavly']);
 });
 
 test('a rebound key is bound to the same command, and the old key is not bound', () => {
@@ -59,5 +65,5 @@ test('the keys that run a command of ours are bound only in a chat, and only wit
     assert.equal(inChat(key), 'if-shell -F #{==:#{@sheavly_role},chat}', key);
   }
 
-  assert.deepEqual(keysOf(rootFor({}, {})), ['PageUp', 'M-s', 'M-c']);
+  assert.deepEqual(keysOf(rootFor({}, {})), ['PageUp', 'M-Q', 'M-s', 'M-c']);
 });
