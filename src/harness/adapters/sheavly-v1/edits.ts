@@ -1,6 +1,6 @@
 import path from 'node:path';
 import type { EditKind, EditState } from '../../adapter.types.ts';
-import { newCursor, readAppended, type Cursor } from './incremental-lines.ts';
+import { newCursor, readAppendedInChunks, type Cursor } from './incremental-lines.ts';
 
 /** The tools that change a file, and what each one does to it. */
 const EDIT_TOOLS: Record<string, EditKind> = {
@@ -67,21 +67,22 @@ export async function updateEdits(params: {
   state: EditState;
 }): Promise<boolean> {
   const { dir, workspace, state } = params;
-  const appended = await readAppended({
+  let changed = false;
+
+  await readAppendedInChunks({
     file: path.join(dir, 'history.jsonl'),
     cursor: cursorOf(state),
+    onRestart: () => {
+      state.files.clear();
+      changed = true;
+    },
+    onLines: (lines) => {
+      for (const change of lines.flatMap((line) => parseEditLine(line))) {
+        fold({ state, workspace, change });
+        changed = true;
+      }
+    },
   });
-
-  if (!appended) return false;
-
-  if (appended.restarted) state.files.clear();
-
-  let changed = appended.restarted;
-
-  for (const change of appended.lines.flatMap((line) => parseEditLine(line))) {
-    fold({ state, workspace, change });
-    changed = true;
-  }
 
   return changed;
 }

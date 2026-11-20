@@ -1,7 +1,7 @@
 import path from 'node:path';
 import type { ChatChild } from '../../adapter.types.ts';
 import { cleanLabel } from '../../../terminal/text.ts';
-import { newCursor, readAppended, type Cursor } from './incremental-lines.ts';
+import { newCursor, readAppendedInChunks, type Cursor } from './incremental-lines.ts';
 
 /**
  * What a chat has started, read from the conversation's `stream.jsonl`. That file is the harness's
@@ -182,23 +182,22 @@ function fold(state: ChildrenState, event: ChildEvent): void {
  */
 export async function updateChildren(params: { dir: string; state: ChildrenState }): Promise<void> {
   const { dir, state } = params;
-  const appended = await readAppended({
+
+  await readAppendedInChunks({
     file: path.join(dir, 'stream.jsonl'),
     cursor: state.cursor,
+    onRestart: () => {
+      state.sessions.clear();
+      state.tasks.clear();
+    },
+    onLines: (lines) => {
+      for (const line of lines) {
+        const event = parseStreamLine(line);
+
+        if (event) fold(state, event);
+      }
+    },
   });
-
-  if (!appended) return;
-
-  if (appended.restarted) {
-    state.sessions.clear();
-    state.tasks.clear();
-  }
-
-  for (const line of appended.lines) {
-    const event = parseStreamLine(line);
-
-    if (event) fold(state, event);
-  }
 }
 
 function isRunning(item: { open: boolean; startedAt: number }, since: number): boolean {

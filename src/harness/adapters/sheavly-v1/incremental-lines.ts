@@ -46,31 +46,56 @@ export async function readAppended(params: {
   file: string;
   cursor: Cursor;
 }): Promise<{ lines: string[]; restarted: boolean } | undefined> {
-  const { file, cursor } = params;
+  const lines: string[] = [];
+  let restarted = false;
+  const found = await readAppendedInChunks({
+    ...params,
+    onRestart: () => {
+      restarted = true;
+    },
+    onLines: (chunk) => {
+      for (const line of chunk) lines.push(line);
+    },
+  });
+
+  return found ? { lines, restarted } : undefined;
+}
+
+/**
+ * Like `readAppended`, but hands the lines over a chunk at a time and keeps none, so a reader that
+ * only folds them into something small never holds a whole file: the first look at a stream that
+ * ran for hours is hundreds of megabytes. `onRestart` is called before any line of a file that got
+ * shorter. False when the file is not there.
+ */
+export async function readAppendedInChunks(params: {
+  file: string;
+  cursor: Cursor;
+  onRestart: () => void;
+  onLines: (lines: string[]) => void;
+}): Promise<boolean> {
+  const { file, cursor, onRestart, onLines } = params;
   const handle = await openIfExists(file);
 
-  if (!handle) return undefined;
+  if (!handle) return false;
 
   try {
     const { size } = await handle.stat();
-    const restarted = size < cursor.offset;
 
-    if (restarted) {
+    if (size < cursor.offset) {
       cursor.offset = 0;
       cursor.carry = Buffer.alloc(0);
+      onRestart();
     }
-
-    const lines: string[] = [];
 
     while (cursor.offset < size) {
       const chunk = await readNewLines({ handle, cursor, size });
 
       if (chunk === undefined) break;
 
-      lines.push(...chunk);
+      onLines(chunk);
     }
 
-    return { lines, restarted };
+    return true;
   } finally {
     await handle.close();
   }
