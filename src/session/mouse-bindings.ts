@@ -17,6 +17,16 @@ const THEN = '\\;';
 const FOCUS_FIRST = ['select-pane', '-t', '=', THEN];
 
 /**
+ * Like `FOCUS_FIRST`, except for the sidebar. The click that began a double click already gave it
+ * the keyboard, and by now it may have opened a chat and given the keyboard to that; taking it
+ * back here would land after the sidebar's own `select-pane` and leave the sidebar focused.
+ */
+const FOCUS_UNLESS_SIDEBAR = [
+  ...['if-shell', '-F', '-t', '=', '#{!=:#{@sheavly_role},sidebar}', 'select-pane -t ='],
+  THEN,
+];
+
+/**
  * The sidebar always gets the event as it is, whether or not it asked for the mouse (with the
  * `sidebar` action off, or while it is not running, it would otherwise fall into copy mode).
  */
@@ -40,6 +50,7 @@ const copySelected = (select: 'select-word' | 'select-line'): string =>
  */
 export function mouseKeys(mouse: MouseSettings): MouseKey[] {
   const focus = mouse.focus ? FOCUS_FIRST : [];
+  const focusUnlessSidebar = mouse.focus ? FOCUS_UNLESS_SIDEBAR : [];
   const root = (key: string, command: string[] | undefined): MouseKey[] => [
     { table: ROOT_TABLE, key, command },
   ];
@@ -64,14 +75,14 @@ export function mouseKeys(mouse: MouseSettings): MouseKey[] {
     ...root(
       'DoubleClick1Pane',
       whenCopying([
-        ...[...focus, 'if-shell', '-F', PANE_TAKES_IT],
+        ...[...focusUnlessSidebar, 'if-shell', '-F', '-t', '=', PANE_TAKES_IT],
         ...['send-keys -M', copySelected('select-word')],
       ]),
     ),
     ...root(
       'TripleClick1Pane',
       whenCopying([
-        ...[...focus, 'if-shell', '-F', PANE_TAKES_IT],
+        ...[...focusUnlessSidebar, 'if-shell', '-F', '-t', '=', PANE_TAKES_IT],
         ...['send-keys -M', copySelected('select-line')],
       ]),
     ),

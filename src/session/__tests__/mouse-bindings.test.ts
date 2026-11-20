@@ -70,6 +70,19 @@ test('a drag, a double click and the wheel never start copy mode in the sidebar 
   }
 });
 
+test('a double or triple click never takes the keyboard back for the sidebar, which has moved it to a chat by then', () => {
+  for (const key of ['DoubleClick1Pane', 'TripleClick1Pane']) {
+    const command = commandOf(MOUSE_ALL, 'root', key) ?? '';
+
+    assert.doesNotMatch(command, /^select-pane/, key);
+    assert.match(
+      command,
+      /^if-shell -F -t = #\{!=:#\{@sheavly_role},sidebar} select-pane -t =/,
+      key,
+    );
+  }
+});
+
 const tmux = createTmux({ socket: `shv-mouse-${process.pid}` });
 const listing = async (table: string) => tmux.run(['list-keys', '-T', table]);
 const option = async () => (await tmux.run(['show-options', '-gqv', 'mouse'])).trim();
@@ -92,7 +105,7 @@ test(
 
     assert.equal(await option(), 'on');
     assert.match(all, /MouseDown1Pane\s+select-pane -t = \\; send-keys -M/);
-    assert.match(all, /DoubleClick1Pane\s+select-pane -t = \\; if-shell/);
+    assert.match(all, /DoubleClick1Pane\s+if-shell -F -t = "#\{!=:#\{@sheavly_role},sidebar}"/);
     assert.match(
       await listing('copy-mode'),
       /MouseDragEnd1Pane\s+send-keys -X copy-pipe-and-cancel/,
