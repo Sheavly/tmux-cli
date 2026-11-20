@@ -13,7 +13,8 @@ import type { Bindings } from '../keys/bindings.ts';
 import type { PaneInfo } from '../session/panes.ts';
 import type { Session } from '../session/session.ts';
 import type { Tmux } from '../tmux/tmux.ts';
-import type { Focus } from './render.ts';
+import type { MouseSettings } from '../config/mouse-settings.ts';
+import type { Focus, ItemsOnScreen } from './render.ts';
 import type { Row } from './view.ts';
 
 /** The folder browser, in place of the chat list. */
@@ -100,6 +101,8 @@ export type SidebarState = {
   profileCursorKeys: Map<string, string>;
   cursor: number;
   scrollTop: number;
+  /** Where the rows of the chat list were drawn, so a click on one finds it. */
+  items: ItemsOnScreen;
   showAll: boolean;
   /** The last screen written, so an unchanged one is not written again. */
   lastPaint: string;
@@ -128,6 +131,8 @@ export type SidebarContext = {
   bindings: Bindings;
   /** How a folder's chats are ordered. */
   chatOrder: ChatOrder;
+  /** What the mouse may do. */
+  mouse: MouseSettings;
   /** Whether the sidebar draws its own divider line. */
   divider: boolean;
   /** Where the names the user gave chats are kept. */

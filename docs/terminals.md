@@ -52,6 +52,17 @@ and Option in some on macOS. tmux's right-click menus (split, new window, kill) 
 with the rest of its own keys (`lockTmux` in the README's Settings), since they change the layout
 the sidebar expects.
 
+What it does is `mouse` in the config (README, Settings): `scroll`, `copy`, `focus` and `sidebar`,
+each on or off. tmux's own default mouse bindings are written out again at every start, from those
+four, so turning one off leaves the others as they were. A wheel notch moves three rows, as in tmux.
+
+The sidebar asks the terminal for the mouse (presses and the wheel, in the SGR form that has no
+column limit) when `sidebar` is on, and the file viewer and the numbered lines when `scroll` is.
+While one of them has it, tmux does not select text in that pane and the terminal's own selection
+needs the modifier above; with those off, dragging in the sidebar copies as it does in the chat.
+In the sidebar only the chat list reacts to the mouse: the folder browser, files list, profile
+list and help take keys. Clicking with Shift, Alt or Ctrl held is left to the terminal and tmux.
+
 ## Copy mode keys
 
 `Shift` and `Ctrl` with the arrows, which copy mode uses to select and to jump by word, rely on the

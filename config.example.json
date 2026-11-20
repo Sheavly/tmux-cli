@@ -4,6 +4,12 @@
   "chatOrder": "prompted",
   "escapeTime": 10,
   "lockTmux": true,
+  "mouse": {
+    "scroll": true,
+    "copy": true,
+    "focus": true,
+    "sidebar": true
+  },
   "socket": "sheavly",
   "acceptUnboundKeys": false,
   "keys": {

@@ -1,3 +1,5 @@
+import { parseMouseReport, SPLIT_AT_REPORTS, type MouseEvent } from '../terminal/mouse.utils.ts';
+
 /**
  * A key as a terminal program reads it: a character, or a name such as `up`, `enter`, `escape`,
  * `backspace`, `pageup`, `delete`, `alt+f` or `ctrl+right`.
@@ -19,6 +21,23 @@ const ESCAPES: Record<string, Key> = {
   '\u001b[5~': 'pageup',
   '\u001b[6~': 'pagedown',
 };
+
+/** What a raw terminal sends a program: a key, or (once it has asked for them) the mouse. */
+export type Input = { kind: 'key'; key: Key } | { kind: 'mouse'; mouse: MouseEvent };
+
+/**
+ * Splits one read into keys and mouse events, in the order they came. A mouse report that is not
+ * of use (a release, a move) is dropped like any sequence we don't know.
+ */
+export function parseInput(data: string): Input[] {
+  return data.split(SPLIT_AT_REPORTS).flatMap((part, index): Input[] => {
+    if (index % 2 === 0) return parseKeys(part).map((key) => ({ kind: 'key', key }));
+
+    const mouse = parseMouseReport(part);
+
+    return mouse ? [{ kind: 'mouse', mouse }] : [];
+  });
+}
 
 /** Splits one read from a raw terminal into keys; an unknown escape sequence is dropped whole. */
 export function parseKeys(data: string): Key[] {

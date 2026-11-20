@@ -3,6 +3,7 @@ import path from 'node:path';
 import { readNames } from '../chats/names.ts';
 import { readPromptTimes } from '../chats/prompt-times.ts';
 import { configFilePath, type ChatOrder } from '../config/config.ts';
+import { MOUSE_ALL, type MouseSettings } from '../config/mouse-settings.ts';
 import type { HarnessAdapter } from '../harness/adapter.types.ts';
 import { defaultBindings, type Bindings } from '../keys/bindings.ts';
 import { readActiveProfile, stateFilePath } from '../profiles/active.ts';
@@ -11,7 +12,9 @@ import type { Session } from '../session/session.ts';
 import type { Tmux } from '../tmux/tmux.ts';
 import { drawScreen } from './draw.ts';
 import { startFullScreen } from './full-screen.ts';
+import type { MouseEvent } from '../terminal/mouse.utils.ts';
 import { handleKey } from './handle-key.ts';
+import { handleMouse } from './mouse.ts';
 import { refresh } from './refresh.ts';
 import { clearScreen } from './screen.ts';
 import { PANE_REFRESH_MS } from './sidebar.constants.ts';
@@ -33,6 +36,7 @@ function initialState(): SidebarState {
     profileCursorKeys: new Map(),
     cursor: 0,
     scrollTop: 0,
+    items: { firstRow: 0, top: 0, count: 0 },
     showAll: false,
     lastPaint: '',
     tick: 0,
@@ -64,6 +68,8 @@ export async function runSidebar(params: {
   bindings?: Bindings;
   /** How a folder's chats are ordered; by their last prompt when not given. */
   chatOrder?: ChatOrder;
+  /** What the mouse may do; all of it when not given. */
+  mouse?: MouseSettings;
 }): Promise<never> {
   const {
     adapter,
@@ -72,6 +78,7 @@ export async function runSidebar(params: {
     viewCommand,
     bindings = defaultBindings(),
     chatOrder = 'prompted',
+    mouse = MOUSE_ALL,
   } = params;
   const state = initialState();
   const divider = (await tmux.run(['show-options', '-gqv', DIVIDER_OPTION])).trim() === 'own';
@@ -84,6 +91,7 @@ export async function runSidebar(params: {
     viewCommand,
     bindings,
     chatOrder,
+    mouse,
     divider,
     namesFile,
     promptTimesFile: path.join(configDir, 'prompt-times.json'),
@@ -105,6 +113,9 @@ export async function runSidebar(params: {
 
   startFullScreen({
     onKey: (key) => handleKey(ctx, key),
+    // Asking for the mouse takes it from tmux's copy mode in this pane (the terminal's own
+    // selection needs Shift), so it is asked for only when the sidebar has a use for it.
+    ...(mouse.sidebar ? { onMouse: (event: MouseEvent) => handleMouse(ctx, event) } : {}),
     onResize: () => {
       clearScreen(ctx);
       ctx.draw();

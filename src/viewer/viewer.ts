@@ -1,8 +1,10 @@
 import os from 'node:os';
 import path from 'node:path';
+import { MOUSE_ALL, type MouseSettings } from '../config/mouse-settings.ts';
 import { defaultBindings, type Bindings } from '../keys/bindings.ts';
 import { fromTerminal } from '../keys/key.ts';
 import type { ActionId } from '../keys/registry.ts';
+import { wheelRows, type MouseEvent } from '../terminal/mouse.utils.ts';
 import { fitColumns } from '../terminal/width.utils.ts';
 import { startFullScreen } from '../sidebar/full-screen.ts';
 import { hintKey } from '../sidebar/help.ts';
@@ -26,8 +28,10 @@ export async function runViewer(params: {
   file: string;
   /** Which keys do what; the defaults when not given. */
   bindings?: Bindings;
+  /** What the mouse may do; all of it when not given. */
+  mouse?: MouseSettings;
 }): Promise<never> {
-  const { bindings = defaultBindings() } = params;
+  const { bindings = defaultBindings(), mouse = MOUSE_ALL } = params;
   const hint = (id: ActionId): string => hintKey(bindings, id);
   const file = path.resolve(params.file);
   const loaded = await loadFile(file);
@@ -65,6 +69,12 @@ export async function runViewer(params: {
     anchor = target;
     top = Math.min(Math.max(target - 2, 0), maxTop());
     draw();
+  }
+
+  function wheel(event: MouseEvent): void {
+    const rowsMoved = wheelRows(event);
+
+    if (rowsMoved !== 0) scroll(rowsMoved);
   }
 
   function pan(delta: number): void {
@@ -180,6 +190,7 @@ export async function runViewer(params: {
 
   startFullScreen({
     onKey: handleKey,
+    ...(mouse.scroll ? { onMouse: (event: MouseEvent) => wheel(event) } : {}),
     onResize: () => {
       process.stdout.write(screenCodes.clear);
       draw();

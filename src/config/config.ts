@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { DEFAULT_ADAPTER } from '../harness/index.ts';
 import { parseJsonObject } from './json-file.ts';
+import { MOUSE_ALL, parseMouseSettings, type MouseSettings } from './mouse-settings.ts';
 import {
   parseKeyOverrides,
   resolveBindings,
@@ -44,6 +45,8 @@ export type Config = {
    * leaves tmux as it is, for someone who wants its prefix keys there.
    */
   lockTmux: boolean;
+  /** Which things the mouse may do; all of them unless the file turns some off. */
+  mouse: MouseSettings;
   /** The tmux socket name: a server of its own, so no other tmux settings or bindings are touched. */
   socket: string;
 };
@@ -56,6 +59,7 @@ const FILE_KEYS = [
   'chatOrder',
   'escapeTime',
   'lockTmux',
+  'mouse',
   'socket',
   'keys',
   'acceptUnboundKeys',
@@ -98,6 +102,7 @@ export function loadConfig(
     chatOrder: file.chatOrder ?? 'prompted',
     escapeTime: file.escapeTime,
     lockTmux: file.lockTmux ?? true,
+    mouse: file.mouse ?? MOUSE_ALL,
     socket: file.socket ?? 'sheavly',
   };
 }
@@ -115,6 +120,7 @@ type FileConfig = {
   chatOrder?: ChatOrder;
   escapeTime?: number;
   lockTmux?: boolean;
+  mouse?: MouseSettings;
   socket?: string;
   keys?: KeyOverrides;
   acceptUnboundKeys?: boolean;
@@ -162,6 +168,9 @@ function parseConfigFile(params: { file: string; text: string }): FileConfig {
     ...(record.keys === undefined ? {} : { keys: parseKeyOverrides({ file, value: record.keys }) }),
     ...booleanField({ file, record, key: 'acceptUnboundKeys' }),
     ...booleanField({ file, record, key: 'lockTmux' }),
+    ...(record.mouse === undefined
+      ? {}
+      : { mouse: parseMouseSettings({ file, value: record.mouse }) }),
   };
 }
 

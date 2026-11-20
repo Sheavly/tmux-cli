@@ -64,6 +64,7 @@ async function sidebar(context: CliContext): Promise<void> {
     viewCommand,
     bindings: config.keys,
     chatOrder: config.chatOrder,
+    mouse: config.mouse,
   });
 }
 
@@ -74,6 +75,7 @@ async function lines(context: CliContext): Promise<void> {
     tmux,
     pane: args[0] ?? '',
     bindings: config.keys,
+    mouse: config.mouse,
     ...(adapter.chromeRows ? { chromeRows: adapter.chromeRows } : {}),
   });
 }
@@ -99,7 +101,7 @@ async function escape(context: CliContext): Promise<void> {
 async function view(context: CliContext): Promise<void> {
   const file = required({ args: context.args, usage: 'view <file>' });
 
-  await runViewer({ file, bindings: context.config.keys });
+  await runViewer({ file, bindings: context.config.keys, mouse: context.config.mouse });
 }
 
 async function stop(context: CliContext): Promise<void> {

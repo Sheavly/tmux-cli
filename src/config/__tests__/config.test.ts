@@ -87,6 +87,28 @@ test('tmux’s own keys are locked in the session unless the file says lockTmux 
   assert.throws(() => load('{"lockTmux":"no"}'), /"lockTmux" must be true or false/);
 });
 
+test('every mouse action is on unless the file turns it off, one by one or all together', () => {
+  const load = (text: string) => loadConfig({ env: {}, home: '/h', readFile: () => text });
+  const all = { scroll: true, copy: true, focus: true, sidebar: true };
+
+  assert.deepEqual(loadConfig({ env: {}, home: '/h', readFile: missing }).mouse, all);
+  assert.deepEqual(load('{"mouse":true}').mouse, all);
+  assert.deepEqual(load('{"mouse":false}').mouse, {
+    scroll: false,
+    copy: false,
+    focus: false,
+    sidebar: false,
+  });
+  assert.deepEqual(load('{"mouse":{"focus":false,"sidebar":false}}').mouse, {
+    ...all,
+    focus: false,
+    sidebar: false,
+  });
+  assert.throws(() => load('{"mouse":"yes"}'), /"mouse" must be true, false or an object/);
+  assert.throws(() => load('{"mouse":{"click":false}}'), /mouse\.click: unknown action/);
+  assert.throws(() => load('{"mouse":{"copy":"no"}}'), /"mouse\.copy" must be true or false/);
+});
+
 test('without a keys section the keys are the defaults and nothing needs accepting', () => {
   const config = loadConfig({ env: {}, home: '/h', readFile: missing });
 

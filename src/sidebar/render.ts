@@ -74,8 +74,22 @@ export function scrollFor(params: {
   return Math.min(Math.max(top, 0), maxTop);
 }
 
+/** Where the list's rows are on screen, for a click to find the row it is on. */
+export type ItemsOnScreen = {
+  /** The screen row of the first row of the list. */
+  firstRow: number;
+  /** The index in the list of that first row. */
+  top: number;
+  /** How many rows of the list are shown. */
+  count: number;
+};
+
 /** Every line is exactly `width` wide, so drawing a screen overwrites the last one completely. */
-export function renderScreen(screen: Screen): { lines: string[]; scrollTop: number } {
+export function renderScreen(screen: Screen): {
+  lines: string[];
+  scrollTop: number;
+  items: ItemsOnScreen;
+} {
   const { rows, cursor, height, footer } = screen;
   const inner = { ...screen, width: screen.width - (screen.divider ? GUTTER.length : 0) };
   const titleLines =
@@ -102,7 +116,11 @@ export function renderScreen(screen: Screen): { lines: string[]; scrollTop: numb
     withDivider({ line, lit: isLit({ index, total: lines.length, focus: screen.focus }) }),
   );
 
-  return { lines: screen.divider ? marked : lines, scrollTop };
+  return {
+    lines: screen.divider ? marked : lines,
+    scrollTop,
+    items: { firstRow: titleLines.length, top: scrollTop, count: body.length },
+  };
 }
 
 /** A stretch of an item drawn in a colour or weight: `start` and `length` count characters. */
@@ -303,6 +321,10 @@ export const screenCodes = {
   leave: `${ESC}?1004l${ESC}?7h${ESC}?25h${ESC}?1049l`,
   home: `${ESC}H`,
   clear: `${ESC}2J`,
+  // Presses and the wheel (1000), in the form that has no limit on the column (1006). While a
+  // program asks for them, tmux hands it the mouse and the terminal's own selection needs Shift.
+  mouseOn: `${ESC}?1000h${ESC}?1006h`,
+  mouseOff: `${ESC}?1006l${ESC}?1000l`,
 };
 
 export function paint(lines: string[]): string {

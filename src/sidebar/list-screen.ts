@@ -62,11 +62,13 @@ export function drawList(ctx: SidebarContext): void {
   });
 
   state.scrollTop = screen.scrollTop;
+  state.items = screen.items;
 
   if (emit(ctx, screen.lines)) void loadMissingLabels(ctx, list);
 }
 
-function move(ctx: SidebarContext, delta: number): void {
+/** Moves the cursor by `delta` rows, keeping it on the list. */
+export function moveCursor(ctx: SidebarContext, delta: number): void {
   const { state } = ctx;
   const list = rows(ctx);
   const next = Math.min(Math.max(state.cursor + delta, 0), list.length - 1);
@@ -76,7 +78,7 @@ function move(ctx: SidebarContext, delta: number): void {
 }
 
 /** Opens (or folds, or expands) what the cursor is on. */
-async function activate(ctx: SidebarContext): Promise<void> {
+export async function activate(ctx: SidebarContext): Promise<void> {
   const { state, session } = ctx;
   const row = rows(ctx)[state.cursor];
 
@@ -225,7 +227,7 @@ export async function handleList(ctx: SidebarContext, key: Key): Promise<void> {
   const delta = moveFor({ action, page: pageSize() });
 
   if (delta !== undefined) {
-    move(ctx, delta);
+    moveCursor(ctx, delta);
 
     return;
   }

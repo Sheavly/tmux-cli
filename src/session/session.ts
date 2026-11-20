@@ -1,4 +1,5 @@
 import type { Config } from '../config/config.ts';
+import { MOUSE_ALL, type MouseSettings } from '../config/mouse-settings.ts';
 import type { HarnessAdapter } from '../harness/adapter.types.ts';
 import { defaultBindings, type Bindings } from '../keys/bindings.ts';
 import type { TerminalLook } from '../terminal/terminal.types.ts';
@@ -21,6 +22,7 @@ import {
   type PaneInfo,
   type PaneRole,
 } from './panes.ts';
+import { applyMouse } from './mouse-bindings.ts';
 import { placeholderCommand } from './placeholder.ts';
 import { waitForExit } from './process-exit.ts';
 import { applyServerOptions } from './server-options.ts';
@@ -51,6 +53,8 @@ export function createSession(params: {
     escapeTime?: number | undefined;
     /** Switches tmux's own keys off in the session; on unless this says `false`. */
     lockTmux?: boolean | undefined;
+    /** What the mouse may do; all of it unless this says otherwise. */
+    mouse?: MouseSettings | undefined;
   };
   /** Says how a chat is started; the session only runs what it is told. */
   adapter: Pick<HarnessAdapter, 'launch'>;
@@ -124,6 +128,7 @@ export function createSession(params: {
       commands: { linesCommand, copyCommand, escapeCommand },
       copyToClipboard: Boolean(look.clipboardCommand),
     });
+    await applyMouse({ tmux, mouse: config.mouse ?? MOUSE_ALL });
 
     const hasMain = await tmuxSucceeds(tmux, ['has-session', '-t', `=${MAIN_SESSION}`]);
     const sidebarId = hasMain

@@ -1,7 +1,9 @@
+import { MOUSE_ALL, type MouseSettings } from '../config/mouse-settings.ts';
 import { defaultBindings, type Bindings } from '../keys/bindings.ts';
 import { fromTerminal } from '../keys/key.ts';
 import type { ActionId } from '../keys/registry.ts';
 import { LINES_PANE_OPTION } from '../session/panes.ts';
+import { wheelRows, type MouseEvent } from '../terminal/mouse.utils.ts';
 import { fitColumns } from '../terminal/width.utils.ts';
 import { startFullScreen } from '../sidebar/full-screen.ts';
 import { hints as hintsFor } from '../sidebar/help.ts';
@@ -176,8 +178,10 @@ export async function runLines(params: {
   chromeRows?: (rows: readonly string[]) => number;
   /** Which keys do what; the defaults when not given. */
   bindings?: Bindings;
+  /** What the mouse may do; all of it when not given. */
+  mouse?: MouseSettings;
 }): Promise<never> {
-  const { tmux, bindings = defaultBindings() } = params;
+  const { tmux, bindings = defaultBindings(), mouse = MOUSE_ALL } = params;
   const hints = (parts: [ActionId[], string][]): string => hintsFor(bindings, parts);
   const pane = params.pane || (await tmux.run(['show-options', '-gqv', LINES_PANE_OPTION])).trim();
 
@@ -337,6 +341,14 @@ export async function runLines(params: {
 
   startFullScreen({
     onKey: handleKey,
+    ...(mouse.scroll
+      ? {
+          onMouse: (event: MouseEvent) => {
+            scrollTo(top + wheelRows(event));
+            draw();
+          },
+        }
+      : {}),
     onResize: () => {
       process.stdout.write(screenCodes.clear);
       draw();

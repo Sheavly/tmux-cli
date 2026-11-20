@@ -23,7 +23,6 @@ export async function applyServerOptions(params: {
   const { tmux, look, escapeTime = DEFAULT_ESCAPE_TIME_MS } = params;
   const options: Option[] = [
     ['-g', 'remain-on-exit', 'on'],
-    ['-g', 'mouse', 'on'],
     ['-g', 'history-limit', '50000'],
     ['-g', 'focus-events', 'on'],
     ['-g', 'allow-passthrough', 'on'],
