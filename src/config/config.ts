@@ -95,7 +95,7 @@ export function loadConfig(
       }),
     ),
     sidebarWidth: file.sidebarWidth ?? 34,
-    chatOrder: file.chatOrder ?? 'started',
+    chatOrder: file.chatOrder ?? 'prompted',
     escapeTime: file.escapeTime,
     lockTmux: file.lockTmux ?? true,
     socket: file.socket ?? 'sheavly',

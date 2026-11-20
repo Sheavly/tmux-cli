@@ -67,11 +67,11 @@ test('escapeTime is a whole number of milliseconds from 0 to 500, and is left to
   assert.throws(() => load('{"sidebarWidth":10}'), /from 16 to 120/);
 });
 
-test('chatOrder is "started" unless the file says "prompted", and nothing else is accepted', () => {
+test('chatOrder is "prompted" unless the file says "started", and nothing else is accepted', () => {
   const load = (text: string) => loadConfig({ env: {}, home: '/h', readFile: () => text });
 
-  assert.equal(loadConfig({ env: {}, home: '/h', readFile: missing }).chatOrder, 'started');
-  assert.equal(load('{"chatOrder":"prompted"}').chatOrder, 'prompted');
+  assert.equal(loadConfig({ env: {}, home: '/h', readFile: missing }).chatOrder, 'prompted');
+  assert.equal(load('{"chatOrder":"started"}').chatOrder, 'started');
   assert.throws(
     () => load('{"chatOrder":"updated"}'),
     /"chatOrder" must be "started" or "prompted"/,

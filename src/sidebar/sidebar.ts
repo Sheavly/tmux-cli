@@ -62,7 +62,7 @@ export async function runSidebar(params: {
   viewCommand: (file: string) => string;
   /** Which keys do what; the defaults when not given. */
   bindings?: Bindings;
-  /** How a folder's chats are ordered; by when they began when not given. */
+  /** How a folder's chats are ordered; by their last prompt when not given. */
   chatOrder?: ChatOrder;
 }): Promise<never> {
   const {
@@ -71,7 +71,7 @@ export async function runSidebar(params: {
     tmux,
     viewCommand,
     bindings = defaultBindings(),
-    chatOrder = 'started',
+    chatOrder = 'prompted',
   } = params;
   const state = initialState();
   const divider = (await tmux.run(['show-options', '-gqv', DIVIDER_OPTION])).trim() === 'own';

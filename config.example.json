@@ -1,7 +1,7 @@
 {
   "adapter": "sheavly-v1",
   "sidebarWidth": 34,
-  "chatOrder": "started",
+  "chatOrder": "prompted",
   "escapeTime": 10,
   "lockTmux": true,
   "socket": "sheavly",
