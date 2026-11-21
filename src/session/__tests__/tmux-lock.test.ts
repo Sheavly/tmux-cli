@@ -40,10 +40,11 @@ test(
       assert.doesNotMatch(root, new RegExp(`-T root ${key} `), key);
     }
 
-    // ...what the session uses is not: our keys, the wheel, and dragging a border.
+    // ...what the session uses is not: our keys and the wheel. Dragging a border is off, so the
+    // mouse cannot change the sidebar's width.
     assert.match(root, /M-s .*select-pane/);
     assert.match(root, /WheelUpPane /);
-    assert.match(root, /MouseDrag1Border /);
+    assert.doesNotMatch(root, /MouseDrag1Border /);
   },
 );
 

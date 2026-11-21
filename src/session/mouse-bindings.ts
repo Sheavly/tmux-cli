@@ -11,7 +11,7 @@ export type MouseKey = { table: string; key: string; command: string[] | undefin
  * Joins two commands of one binding. From an argument list tmux would take a bare `;` for the end
  * of the `bind-key` itself, so the separator is written the way a shell would pass `\;`.
  */
-const THEN = '\\;';
+export const THEN = '\\;';
 
 /** The pane under the mouse gets the keyboard (what a click does for focus). */
 const FOCUS_FIRST = ['select-pane', '-t', '=', THEN];
@@ -62,6 +62,8 @@ export function mouseKeys(mouse: MouseSettings): MouseKey[] {
     mouse.scroll ? command : undefined;
 
   return [
+    // The sidebar's width is ours (`keepSidebarWidth`), so tmux's drag of a border is left unbound.
+    ...root('MouseDrag1Border', undefined),
     // A click goes to the program in the pane when it asked for the mouse (the sidebar does).
     ...root('MouseDown1Pane', [...focus, 'send-keys', '-M']),
     ...root(

@@ -19,6 +19,17 @@ test('with the default keys the root table has the keys it always had', () => {
   assert.deepEqual(keysOf(rootFor({})), ['PageUp', 'M-Q', 'M-s', 'M-c', 'Escape', 'M-g']);
 });
 
+test('the width keys size the sidebar from its set width, 8 columns at a step and never past 120, and need that width', () => {
+  assert.ok(!keysOf(rootFor({})).includes('M-C-1'));
+
+  const bindings = rootFor({}, { ...commands, sidebarWidth: 100 });
+  const resizeOf = (key: string) => bindings.find((binding) => binding.key === key)?.command.at(-1);
+
+  assert.equal(resizeOf('M-C-1'), '100');
+  assert.equal(resizeOf('M-C-2'), '108');
+  assert.equal(resizeOf('M-C-4'), '120');
+});
+
 test('the detach key works in any pane, so it does not depend on the sidebar being alive', () => {
   const [detach] = rootFor({}).filter((binding) => binding.key === 'M-Q');
 

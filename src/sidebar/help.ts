@@ -112,19 +112,57 @@ function line(bindings: Bindings, ids: ActionId[], description: string): string[
 
   if (keys.length === 0) return [];
 
-  const text = keys.join(' ');
+  return [helpLine(keys.join(' '), description)];
+}
 
-  return [
-    text.length < KEY_COLUMN
-      ? `${text.padEnd(KEY_COLUMN)}${description}`
-      : `${text} ${description}`,
-  ];
+/** The keys in a column of their own when they fit it, and else just before the text. */
+function helpLine(keys: string, description: string): string {
+  return keys.length < KEY_COLUMN
+    ? `${keys.padEnd(KEY_COLUMN)}${description}`
+    : `${keys} ${description}`;
 }
 
 function describe(bindings: Bindings, id: ActionId): string[] {
   const found = bindings.list().find((action) => action.id === id);
 
   return found ? line(bindings, [id], found.description) : [];
+}
+
+const WIDTH_ACTIONS: ActionId[] = [
+  'global.sidebarWidth1',
+  'global.sidebarWidth2',
+  'global.sidebarWidth3',
+  'global.sidebarWidth4',
+];
+
+/**
+ * The four width keys on one line, the way they are usually bound: one set of modifiers and a
+ * character each (`Alt+Ctrl+1-4`). Keys that were rebound to something else get a line each.
+ */
+function widthHelp(bindings: Bindings): string[] {
+  const parts = WIDTH_ACTIONS.flatMap((id) => {
+    const [key] = bindings.keys(id);
+    const match = key ? /^((?:[MCS]-)*)(.)$/su.exec(key) : null;
+
+    // The modifiers are labelled by writing them before a character that labels as itself.
+    return match
+      ? [{ modifiers: keyLabel(`${match[1]}a`).slice(0, -1), base: match[2] as string }]
+      : [];
+  });
+  const [first] = parts;
+  const together =
+    first !== undefined &&
+    parts.length === WIDTH_ACTIONS.length &&
+    parts.every((part) => part.modifiers === first.modifiers);
+
+  if (!together) return WIDTH_ACTIONS.flatMap((id) => describe(bindings, id));
+
+  const bases = parts.map((part) => part.base);
+  const digits = bases.every((base, index) => Number(base) === Number(bases[0]) + index);
+  const range = digits ? `${bases[0]}-${bases.at(-1)}` : bases.join('/');
+  const keys = `${first.modifiers}${range}`;
+
+  return [helpLine(keys, 'sidebar width')];
 }
 
 export function listHelp(options: HelpOptions): string[] {
@@ -148,6 +186,7 @@ export function listHelp(options: HelpOptions): string[] {
     ...some(['list.showAll', 'list.runningOnly', 'list.redraw', 'list.detach', 'list.quitAll']),
     ...(options.files ? some(['list.files']) : []),
     ...some(['navigation.help', 'global.togglePane']),
+    ...widthHelp(bindings),
     ...chatHelp(options),
   ];
 }

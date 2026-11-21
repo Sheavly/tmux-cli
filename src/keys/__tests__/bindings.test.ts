@@ -182,6 +182,8 @@ test('the tmux keys keep what they were bound to', () => {
   assert.deepEqual(defaults.keys('global.copyNewest'), ['M-c']);
   assert.deepEqual(defaults.keys('global.copyLines'), ['M-g']);
   assert.deepEqual(defaults.keys('global.chatEscape'), ['Escape']);
+  assert.deepEqual(defaults.keys('global.sidebarWidth1'), ['M-C-1']);
+  assert.deepEqual(defaults.keys('global.sidebarWidth4'), ['M-C-4']);
   assert.deepEqual(defaults.keys('copyMode.copy'), ['Enter', 'C-c']);
   assert.deepEqual(defaults.keys('copyMode.selectWordNext'), ['C-S-Right']);
   assert.equal(defaults.copyMode, true);

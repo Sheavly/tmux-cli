@@ -48,8 +48,22 @@ export async function applyServerOptions(params: {
     await tmux.run(['set-option', '-g', '@sheavly_background', look.background]);
   }
 
+  await applyExtendedKeys(tmux);
   await applyColour({ tmux, truecolor: look.truecolor === true });
   await applyClipboardCommand({ tmux, command: look.clipboardCommand });
+}
+
+/**
+ * `extended-keys on` only lets tmux read keys a terminal reports in the extended form; whether
+ * tmux asks the terminal to report them is a terminal feature, which tmux knows for few terminals.
+ * Without it a key such as Ctrl+Alt+2 arrives as nothing tmux can tell from other keys.
+ */
+async function applyExtendedKeys(tmux: Tmux): Promise<void> {
+  const features = await tmux.run(['show-options', '-sv', 'terminal-features']);
+
+  if (!features.includes(':extkeys')) {
+    await tmux.run(['set-option', '-sa', 'terminal-features', '*:extkeys']);
+  }
 }
 
 /**

@@ -34,66 +34,67 @@ everywhere. Two actions that are used on one screen at once cannot have the same
 error naming both. On the screens that take text (the file search and the rename line) a plain
 character is always typed, so a letter bound to a motion only works on the other screens.
 
-| Action                                                                      | Default                            | Does                                                        |
-| --------------------------------------------------------------------------- | ---------------------------------- | ----------------------------------------------------------- |
-| `global.detach`                                                             | `M-Q`                              | detach from any pane, even if the sidebar died              |
-| `global.togglePane`                                                         | `M-s`                              | switch between sidebar and chat                             |
-| `global.scrollBack`                                                         | `PageUp`                           | scroll back in the chat                                     |
-| `global.copyNewest`                                                         | `M-c`                              | copy mode at the newest line                                |
-| `global.copyLines`                                                          | `M-g`                              | number the lines to copy from (again closes)                |
-| `global.chatEscape`                                                         | `Escape`                           | twice in a row clears the prompt                            |
-| `copyMode.selectLeft` `selectRight` `selectUp` `selectDown`                 | `S-Left` `S-Right` `S-Up` `S-Down` | select                                                      |
-| `copyMode.wordPrevious` `wordNext`                                          | `C-Left` `C-Right`                 | jump a word                                                 |
-| `copyMode.selectWordPrevious` `selectWordNext`                              | `C-S-Left` `C-S-Right`             | select a word                                               |
-| `copyMode.copy`                                                             | `Enter` `C-c`                      | copy the selection and leave                                |
-| `copyMode.escape`                                                           | `Escape`                           | drop the selection, then leave                              |
-| `copyMode.quit`                                                             | `q`                                | leave                                                       |
-| `navigation.up` `down`                                                      | `Up` `k` / `Down` `j`              | move                                                        |
-| `navigation.pageUp` `pageDown`                                              | `PageUp` `PageDown`                | page                                                        |
-| `navigation.top` `bottom`                                                   | `g` `G`                            | first and last                                              |
-| `navigation.open`                                                           | `Enter`                            | open the chat, folder or profile                            |
-| `navigation.help`                                                           | `?`                                | show help                                                   |
-| `list.selectActive`                                                         | `Left` `Right`                     | select the chat on screen                                   |
-| `list.newChat`                                                              | `n`                                | new chat in the folder                                      |
-| `list.browseFolder`                                                         | `N`                                | new chat: browse for a folder                               |
-| `list.profiles`                                                             | `p`                                | switch profile                                              |
-| `list.nextProfile`                                                          | `P`                                | next profile, wrapping around                               |
-| `list.search`                                                               | `s`                                | search chats by name: Enter selects, Esc cancels            |
-| `list.files`                                                                | `f`                                | files the chat changed                                      |
-| `list.rename`                                                               | `R`                                | rename chat                                                 |
-| `list.move`                                                                 | `m`                                | move the folder: it is pinned above the alphabetical ones   |
-| `list.runningOnly`                                                          | `A`                                | show only running chats (kept across restarts)              |
-| `list.showAll`                                                              | `a`                                | show all chats                                              |
-| `list.stop`                                                                 | `x`                                | stop chat                                                   |
-| `list.delete`                                                               | `Delete`                           | delete chat                                                 |
-| `list.redraw`                                                               | `r`                                | redraw                                                      |
-| `list.detach`                                                               | `q`                                | detach (chats keep running)                                 |
-| `list.quitAll`                                                              | `Q`                                | stop all chats and quit                                     |
-| `move.up` `down`                                                            | `Up` `k` / `Down` `j`              | move the pinned folder                                      |
-| `move.unpin`                                                                | `u`                                | back to alphabetical order                                  |
-| `move.done`                                                                 | `Enter` `Escape` `m`               | leave the folder where it is                                |
-| `browser.parent`                                                            | `Left` `h` `BSpace`                | up a folder                                                 |
-| `browser.into`                                                              | `Right` `l`                        | go into the folder                                          |
-| `browser.cancel`                                                            | `Escape` `q`                       | cancel                                                      |
-| `browser.filter`                                                            | `s`                                | filter the folders: Enter opens, Esc clears, then goes back |
-| `browser.goToPath`                                                          | `p`                                | go to a typed path: `~`, absolute, or from the folder shown |
-| `browser.home`                                                              | `~`                                | home folder                                                 |
-| `browser.hidden`                                                            | `.`                                | show hidden folders                                         |
-| `browser.newHere`                                                           | `o` `Space`                        | new chat here                                               |
-| `profiles.close`                                                            | `Escape` `q` `p`                   | close the list                                              |
-| `text.erase` `cancel` `submit`                                              | `BSpace` `Escape` `Enter`          | the file search, the chat search and the rename line        |
-| `help.scrollUp` `scrollDown` `scrollLeft` `scrollRight` `pageUp` `pageDown` | arrows, `PageUp` `PageDown`        | scroll the help (any other key closes it)                   |
-| `confirm.delete`                                                            | `Enter`                            | delete the chat                                             |
-| `confirm.quit`                                                              | `Enter`                            | stop everything                                             |
-| `popup.scrollUp` `scrollDown` `pageUp` `pageDown`                           | `Up` `Down` `PageUp` `PageDown`    | scroll the numbered lines                                   |
-| `popup.jump` `erase` `cancel`                                               | `Enter` `BSpace` `Escape`          | jump to the line, erase a digit, clear then close           |
-| `viewer.close`                                                              | `Escape` `q`                       | close the file viewer                                       |
-| `viewer.scrollUp` `scrollDown`                                              | `Up` `k` / `Down` `j`              | scroll                                                      |
-| `viewer.pageUp` `pageDown`                                                  | `PageUp` / `PageDown` `Space`      | page                                                        |
-| `viewer.top` `bottom`                                                       | `g` `G`                            | top and bottom                                              |
-| `viewer.panLeft` `panRight`                                                 | `Left` `h` / `Right` `l`           | pan                                                         |
-| `viewer.nextChange` `previousChange`                                        | `n` `p`                            | between changes                                             |
-| `viewer.copyMode`                                                           | `M-c`                              | copy mode in the file viewer                                |
+| Action                                                                      | Default                            | Does                                                                   |
+| --------------------------------------------------------------------------- | ---------------------------------- | ---------------------------------------------------------------------- |
+| `global.detach`                                                             | `M-Q`                              | detach from any pane, even if the sidebar died                         |
+| `global.togglePane`                                                         | `M-s`                              | switch between sidebar and chat                                        |
+| `global.scrollBack`                                                         | `PageUp`                           | scroll back in the chat                                                |
+| `global.copyNewest`                                                         | `M-c`                              | copy mode at the newest line                                           |
+| `global.copyLines`                                                          | `M-g`                              | number the lines to copy from (again closes)                           |
+| `global.chatEscape`                                                         | `Escape`                           | twice in a row clears the prompt                                       |
+| `global.sidebarWidth1` `sidebarWidth2` `sidebarWidth3` `sidebarWidth4`      | `M-C-1` `M-C-2` `M-C-3` `M-C-4`    | sidebar at `sidebarWidth`, then 8, 16 and 24 columns wider (up to 120) |
+| `copyMode.selectLeft` `selectRight` `selectUp` `selectDown`                 | `S-Left` `S-Right` `S-Up` `S-Down` | select                                                                 |
+| `copyMode.wordPrevious` `wordNext`                                          | `C-Left` `C-Right`                 | jump a word                                                            |
+| `copyMode.selectWordPrevious` `selectWordNext`                              | `C-S-Left` `C-S-Right`             | select a word                                                          |
+| `copyMode.copy`                                                             | `Enter` `C-c`                      | copy the selection and leave                                           |
+| `copyMode.escape`                                                           | `Escape`                           | drop the selection, then leave                                         |
+| `copyMode.quit`                                                             | `q`                                | leave                                                                  |
+| `navigation.up` `down`                                                      | `Up` `k` / `Down` `j`              | move                                                                   |
+| `navigation.pageUp` `pageDown`                                              | `PageUp` `PageDown`                | page                                                                   |
+| `navigation.top` `bottom`                                                   | `g` `G`                            | first and last                                                         |
+| `navigation.open`                                                           | `Enter`                            | open the chat, folder or profile                                       |
+| `navigation.help`                                                           | `?`                                | show help                                                              |
+| `list.selectActive`                                                         | `Left` `Right`                     | select the chat on screen                                              |
+| `list.newChat`                                                              | `n`                                | new chat in the folder                                                 |
+| `list.browseFolder`                                                         | `N`                                | new chat: browse for a folder                                          |
+| `list.profiles`                                                             | `p`                                | switch profile                                                         |
+| `list.nextProfile`                                                          | `P`                                | next profile, wrapping around                                          |
+| `list.search`                                                               | `s`                                | search chats by name: Enter selects, Esc cancels                       |
+| `list.files`                                                                | `f`                                | files the chat changed                                                 |
+| `list.rename`                                                               | `R`                                | rename chat                                                            |
+| `list.move`                                                                 | `m`                                | move the folder: it is pinned above the alphabetical ones              |
+| `list.runningOnly`                                                          | `A`                                | show only running chats (kept across restarts)                         |
+| `list.showAll`                                                              | `a`                                | show all chats                                                         |
+| `list.stop`                                                                 | `x`                                | stop chat                                                              |
+| `list.delete`                                                               | `Delete`                           | delete chat                                                            |
+| `list.redraw`                                                               | `r`                                | redraw                                                                 |
+| `list.detach`                                                               | `q`                                | detach (chats keep running)                                            |
+| `list.quitAll`                                                              | `Q`                                | stop all chats and quit                                                |
+| `move.up` `down`                                                            | `Up` `k` / `Down` `j`              | move the pinned folder                                                 |
+| `move.unpin`                                                                | `u`                                | back to alphabetical order                                             |
+| `move.done`                                                                 | `Enter` `Escape` `m`               | leave the folder where it is                                           |
+| `browser.parent`                                                            | `Left` `h` `BSpace`                | up a folder                                                            |
+| `browser.into`                                                              | `Right` `l`                        | go into the folder                                                     |
+| `browser.cancel`                                                            | `Escape` `q`                       | cancel                                                                 |
+| `browser.filter`                                                            | `s`                                | filter the folders: Enter opens, Esc clears, then goes back            |
+| `browser.goToPath`                                                          | `p`                                | go to a typed path: `~`, absolute, or from the folder shown            |
+| `browser.home`                                                              | `~`                                | home folder                                                            |
+| `browser.hidden`                                                            | `.`                                | show hidden folders                                                    |
+| `browser.newHere`                                                           | `o` `Space`                        | new chat here                                                          |
+| `profiles.close`                                                            | `Escape` `q` `p`                   | close the list                                                         |
+| `text.erase` `cancel` `submit`                                              | `BSpace` `Escape` `Enter`          | the file search, the chat search and the rename line                   |
+| `help.scrollUp` `scrollDown` `scrollLeft` `scrollRight` `pageUp` `pageDown` | arrows, `PageUp` `PageDown`        | scroll the help (any other key closes it)                              |
+| `confirm.delete`                                                            | `Enter`                            | delete the chat                                                        |
+| `confirm.quit`                                                              | `Enter`                            | stop everything                                                        |
+| `popup.scrollUp` `scrollDown` `pageUp` `pageDown`                           | `Up` `Down` `PageUp` `PageDown`    | scroll the numbered lines                                              |
+| `popup.jump` `erase` `cancel`                                               | `Enter` `BSpace` `Escape`          | jump to the line, erase a digit, clear then close                      |
+| `viewer.close`                                                              | `Escape` `q`                       | close the file viewer                                                  |
+| `viewer.scrollUp` `scrollDown`                                              | `Up` `k` / `Down` `j`              | scroll                                                                 |
+| `viewer.pageUp` `pageDown`                                                  | `PageUp` / `PageDown` `Space`      | page                                                                   |
+| `viewer.top` `bottom`                                                       | `g` `G`                            | top and bottom                                                         |
+| `viewer.panLeft` `panRight`                                                 | `Left` `h` / `Right` `l`           | pan                                                                    |
+| `viewer.nextChange` `previousChange`                                        | `n` `p`                            | between changes                                                        |
+| `viewer.copyMode`                                                           | `M-c`                              | copy mode in the file viewer                                           |
 
 The numbered-lines popup is closed by `global.copyLines` again, and `global.togglePane` closes it
 and goes to the sidebar: it has no keys for those of its own.

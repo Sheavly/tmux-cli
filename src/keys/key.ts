@@ -124,7 +124,11 @@ function checkCharacter(parts: Parts, grammar: Grammar): string | undefined {
   if (parts.shift) return 'cannot use S- with a character: write the character itself (G, not S-g)';
 
   if (parts.ctrl) {
-    if (!/^[a-zA-Z]$/.test(base)) return 'can only use C- with a letter';
+    // tmux gets a Ctrl+digit as an extended key (`extended-keys` is on); a terminal program
+    // would only see the digit.
+    const allowed = grammar === 'tmux' ? /^[a-zA-Z0-9]$/ : /^[a-zA-Z]$/;
+
+    if (!allowed.test(base)) return 'can only use C- with a letter';
 
     if (grammar === 'terminal' && TERMINAL_CTRL_TAKEN.has(base.toLowerCase())) {
       return `is the same key to a terminal as Backspace, Tab or Enter (C-${base.toLowerCase()})`;

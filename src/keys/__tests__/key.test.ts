@@ -41,7 +41,8 @@ test('a key that does not exist, or says one thing twice, is refused with the re
   assert.match(refused('Hyper'), /not a key name/);
   assert.match(refused('C-C-a'), /repeats a modifier/);
   assert.match(refused('S-g'), /write the character itself/);
-  assert.match(refused('C-1'), /only use C- with a letter/);
+  assert.match(refused('C-!'), /only use C- with a letter/);
+  assert.match(refused('C-1', 'terminal'), /only use C- with a letter/);
   assert.match(refused(';'), /cannot be bound/);
 });
 

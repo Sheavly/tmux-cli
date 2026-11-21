@@ -2,6 +2,8 @@ import type { Bindings } from '../keys/bindings.ts';
 import type { ActionId } from '../keys/registry.ts';
 import { shellQuote, type Tmux } from '../tmux/tmux.ts';
 import { COPY_TABLES, copyModeBindings } from './copy-mode.ts';
+import { SIDEBAR_TARGET, sidebarWidthCommands, sidebarWidthOf } from './layout.ts';
+import { THEN } from './mouse-bindings.ts';
 import { LINES_PANE_OPTION, MAIN_SESSION } from './panes.ts';
 
 /** The server option that lists the keys the last start bound, as `table:key` and a space. */
@@ -23,6 +25,8 @@ export type KeyCommands = {
   copyCommand?: string | undefined;
   /** Handles Esc in a chat; without it Esc is not bound and goes to the chat as it is. */
   escapeCommand?: string | undefined;
+  /** The sidebar's set width, which the width keys size from; without it they are not bound. */
+  sidebarWidth?: number | undefined;
 };
 
 /** A key of tmux's root table, outside any mode, and the tmux command it runs. */
@@ -103,6 +107,29 @@ async function unbindStale(tmux: Tmux): Promise<void> {
   }
 }
 
+const WIDTH_ACTIONS: ActionId[] = [
+  'global.sidebarWidth1',
+  'global.sidebarWidth2',
+  'global.sidebarWidth3',
+  'global.sidebarWidth4',
+];
+
+/**
+ * Sets the sidebar to one of its sizes and makes the resize hooks keep that one, so the size
+ * lasts until the next key. Without the set width there is nothing to size from: no key.
+ */
+function widthBinding(setWidth: number | undefined, step: number): string[] | undefined {
+  if (setWidth === undefined) return undefined;
+
+  const target = SIDEBAR_TARGET;
+  const commands = sidebarWidthCommands({
+    target,
+    width: sidebarWidthOf({ width: setWidth, step }),
+  });
+
+  return commands.flatMap((command, index) => (index === 0 ? command : [THEN, ...command]));
+}
+
 /** Only in a chat: the sidebar and the files list have no chat lines to number, and elsewhere the key goes to the pane as it would without a binding. */
 const IN_CHAT = ['if-shell', '-F', '#{==:#{@sheavly_role},chat}'];
 
@@ -144,7 +171,12 @@ export function rootBindings(params: { bindings: Bindings; commands: KeyCommands
     ],
   ];
 
-  return entries.flatMap(([action, build]) =>
+  const widthEntries = WIDTH_ACTIONS.map((action, index): (typeof entries)[number] => [
+    action,
+    () => widthBinding(commands.sidebarWidth, index + 1),
+  ]);
+
+  return [...entries, ...widthEntries].flatMap(([action, build]) =>
     bindings.keys(action).flatMap((key) => {
       const command = build(key);
 

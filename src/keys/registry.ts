@@ -78,6 +78,31 @@ export const ACTIONS = [
     description: 'twice: clear the prompt',
   },
 
+  {
+    id: 'global.sidebarWidth1',
+    keys: ['M-C-1'],
+    modes: ['global'],
+    description: 'sidebar at its set width',
+  },
+  {
+    id: 'global.sidebarWidth2',
+    keys: ['M-C-2'],
+    modes: ['global'],
+    description: 'sidebar a little wider',
+  },
+  {
+    id: 'global.sidebarWidth3',
+    keys: ['M-C-3'],
+    modes: ['global'],
+    description: 'sidebar wider',
+  },
+  {
+    id: 'global.sidebarWidth4',
+    keys: ['M-C-4'],
+    modes: ['global'],
+    description: 'sidebar widest',
+  },
+
   ...COPY_MODE_ACTIONS,
 
   // the sidebar, in every list it has

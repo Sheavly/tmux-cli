@@ -125,7 +125,7 @@ export function createSession(params: {
     await applyBindings({
       tmux,
       bindings,
-      commands: { linesCommand, copyCommand, escapeCommand },
+      commands: { linesCommand, copyCommand, escapeCommand, sidebarWidth: config.sidebarWidth },
       copyToClipboard: Boolean(look.clipboardCommand),
     });
     await applyMouse({ tmux, mouse: config.mouse ?? MOUSE_ALL });

@@ -451,6 +451,27 @@ test('the help shows the keys as they are now, and leaves out what has none', ()
   assert.match(text, /^Ctrl\+← +jump a word back/m);
 });
 
+test('the four width keys are one help line, with the numbers after the modifiers', () => {
+  assert.match(helpFor({}), /^Alt\+Ctrl\+1-4 +sidebar width$/m);
+  assert.match(
+    helpFor({
+      global: {
+        sidebarWidth1: 'M-1',
+        sidebarWidth2: 'M-3',
+        sidebarWidth3: 'M-5',
+        sidebarWidth4: 'M-7',
+      },
+    }),
+    /^Alt\+1\/3\/5\/7 +sidebar width$/m,
+  );
+
+  // Keys that no longer share their modifiers cannot be one line: each gets its own.
+  const split = helpFor({ global: { sidebarWidth2: 'M-2' } });
+
+  assert.match(split, /^Alt\+Ctrl\+1 +sidebar at its set width$/m);
+  assert.match(split, /^Alt\+2 +sidebar a little wider$/m);
+});
+
 test('the help leaves out what the adapter does not offer, and copy mode when it is off', () => {
   const text = helpFor(
     { copyMode: false },

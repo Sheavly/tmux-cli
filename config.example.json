@@ -19,7 +19,11 @@
       "scrollBack": "PageUp",
       "copyNewest": "M-c",
       "copyLines": "M-g",
-      "chatEscape": "Escape"
+      "chatEscape": "Escape",
+      "sidebarWidth1": "M-C-1",
+      "sidebarWidth2": "M-C-2",
+      "sidebarWidth3": "M-C-3",
+      "sidebarWidth4": "M-C-4"
     },
     "copyMode": {
       "selectLeft": "S-Left",

@@ -1,4 +1,4 @@
-import type { Tmux } from '../tmux/tmux.ts';
+import { shellQuote, type Tmux } from '../tmux/tmux.ts';
 import { MAIN_SESSION, PARKING_SESSION, isContentPane, listPanes, type PaneInfo } from './panes.ts';
 
 const IDLE = ['sh', '-c', 'exec tail -f /dev/null'];
@@ -120,6 +120,32 @@ export async function restoreContentPane(params: {
   if (!hasContent) await addPlaceholder({ tmux, sidebarId, placeholder });
 }
 
+/** The hooks that put the sidebar back at its width. */
+const WIDTH_HOOKS = ['window-resized', 'client-attached'];
+/** The most columns the sidebar can have (the same as the `sidebarWidth` setting's). */
+const MAX_WIDTH = 120;
+/** How many columns each of the wider sizes adds to the one before. */
+const WIDTH_STEP = 8;
+
+/** The width of the sidebar's size `step` (1 is the set width, each one after it a little wider). */
+export function sidebarWidthOf(params: { width: number; step: number }): number {
+  return Math.min(MAX_WIDTH, params.width + (params.step - 1) * WIDTH_STEP);
+}
+
+/**
+ * The tmux commands that make `width` the sidebar's width now and keep it so, as separate
+ * commands for `target`. `window-resized` runs after tmux has rescaled the panes, so the width
+ * set there is the last word; `client-resized` runs before it and was overwritten.
+ */
+export function sidebarWidthCommands(params: { target: string; width: number }): string[][] {
+  const resize = ['resize-pane', '-t', params.target, '-x', String(params.width)];
+  // A hook is a command line tmux parses when it runs, where a bare `{left}` opens a block: the
+  // target is quoted there (as it is for a pane id, which needs none).
+  const hookLine = ['resize-pane', '-t', shellQuote(params.target), '-x', String(params.width)];
+
+  return [...WIDTH_HOOKS.map((hook) => ['set-hook', '-g', hook, hookLine.join(' ')]), resize];
+}
+
 /** Keeps the sidebar at its width, now and whenever the window is resized or a client attaches. */
 export async function keepSidebarWidth(params: {
   tmux: Tmux;
@@ -127,13 +153,11 @@ export async function keepSidebarWidth(params: {
   width: number;
 }): Promise<void> {
   const { tmux, sidebarId, width } = params;
-  const resize = `resize-pane -t ${sidebarId} -x ${width}`;
 
-  // `window-resized` runs after tmux has rescaled the panes, so the width set here is the last
-  // word; `client-resized` runs before it and was overwritten.
-  for (const hook of ['window-resized', 'client-attached']) {
-    await tmux.run(['set-hook', '-g', hook, resize]);
+  for (const command of sidebarWidthCommands({ target: sidebarId, width })) {
+    await tmux.run(command);
   }
-
-  await tmux.run(resize.split(' '));
 }
+
+/** The sidebar as a target that needs no pane id: it is the leftmost pane of the main session. */
+export const SIDEBAR_TARGET = `${MAIN_SESSION}:.{left}`;
