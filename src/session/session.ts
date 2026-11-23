@@ -53,6 +53,8 @@ export function createSession(params: {
     escapeTime?: number | undefined;
     /** Switches tmux's own keys off in the session; on unless this says `false`. */
     lockTmux?: boolean | undefined;
+    /** Whether tmux reads extended keys; on unless this says `false`. */
+    extendedKeys?: boolean | undefined;
     /** What the mouse may do; all of it unless this says otherwise. */
     mouse?: MouseSettings | undefined;
   };
@@ -120,7 +122,12 @@ export function createSession(params: {
 
     syncedSize = '';
     // Every start, so a running server picks up options and bindings added since it began.
-    await applyServerOptions({ tmux, look, escapeTime: config.escapeTime });
+    await applyServerOptions({
+      tmux,
+      look,
+      escapeTime: config.escapeTime,
+      extendedKeys: config.extendedKeys ?? true,
+    });
     await applyTmuxLock({ tmux, locked: config.lockTmux ?? true });
     await applyBindings({
       tmux,
@@ -195,8 +202,11 @@ export function createSession(params: {
     // checked by `launch`, and is quoted anyway.
     const recap =
       target.chatId && recapCommand ? `${recapCommand} ${shellQuote(target.chatId)}; ` : '';
-    // In the background and never fatal: it only draws a spinner until the chat has written.
-    const loader = loaderCommand ? `${loaderCommand} 2>/dev/null & ` : '';
+    // In the background and never fatal: it only draws a spinner until the chat has written. It
+    // gets no part of the pane's terminal: Node puts back the terminal settings it found at start
+    // when it exits, which undid the raw mode a chat had just switched on (Enter became a line
+    // feed and what was typed showed twice) whenever the chat was ready before the loader ended.
+    const loader = loaderCommand ? `${loaderCommand} </dev/null >/dev/null 2>&1 & ` : '';
     const command = `${recap}${loader}${launch.command}`;
     const paneId = (
       await tmux.run([

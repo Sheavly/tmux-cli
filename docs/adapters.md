@@ -47,6 +47,61 @@ work), and an `approval_requested` without its `approval_resolved` says it waits
 means a new folder next to it that exports an `AdapterDefinition`, and one entry in the list in
 `src/harness/index.ts`; pick it with the `adapter` setting.
 
+`src/harness/adapters/sheavly-v2/` is the adapter for the harness's one server, which serves every
+chat over HTTP. Pick it with `"adapter": "sheavly-v2"`; it takes the same `harnessDir`, `command`
+and `mode` settings as sheavly-v1. It asks the server for everything the API gives, and reads
+`~/.sheavly` (`SHEAVLY_HOME`) only as a stopgap for what it doesn't yet, read only, through
+`files-fallback.ts`, which wraps a sheavly-v1 adapter. A fallback is used only when the server says
+a chat is not running (a 404), never for a running one, and a chat the files don't have gets
+nothing made up. Each place is named below; as the API gains them the fallback is dropped:
+
+- **Finding the server.** It runs `node apps/sheavly/dist/cli.js connection --json` in the harness
+  folder (so the harness must be built, and `sheavly serve` running) and uses the `url` and `token`
+  it prints. The command refuses a stale file, an impostor and a server of another protocol. The
+  token is only sent as a bearer header and is in no message. A request that can't reach the server
+  or is refused the token asks the command again once, since the server may have been restarted.
+- **What it lists** (`QUERY /stored-conversations`) is the stored chats of every folder and profile;
+  chats of a folder that no longer exists, or of the `workbook`, are left out as in sheavly-v1. The
+  profiles come from `GET /setup`. A server that can't be reached is an error, so the sidebar keeps
+  the chats it already shows.
+- **Launching.** The default `command` is `sheavly chat --trust` (`node apps/sheavly/dist/cli.js`),
+  which finds the running server and never starts one; `--resume <id>` or `--profile <id>` is
+  added as in sheavly-v1. The chat program on its own (`apps/terminal/dist/chat.js`, sheavly-v1's
+  default) starts a backend of its own for each chat, which the sidebar's server would not know.
+  `mode` is `built` only: the `sheavly` command has no source runner, so `dev` is refused.
+- **Only a running chat has a history.** The server answers `GET /conversations/:id/messages` and
+  opens an event stream only for a conversation that is running; for a stored one that is not it
+  answers 404. Everything below that reads the history or the stream says what it does then.
+- **The label.** The server titles every chat "Conversation", so the label is the title once it is
+  anything else, otherwise the first prompt the user typed: from the history of a running chat,
+  and for one that is not running from the harness files (fallback).
+- **Activity, children and edits** come from the chat's event stream
+  (`QUERY /conversations/:id/stream`, replayed from its first entry), opened the first time a chat
+  is asked about and read in the background. Its entries are the lines sheavly-v1 reads from
+  `stream.jsonl`, so they are folded by the same code (`children.ts`, `activity.ts`). A stream is
+  closed when its chat leaves the listing or nobody asked about it for a minute, and opened again
+  when it ends, from the last entry it got. A chat that is not running has no activity and no
+  children, and its files list is read from the harness files (fallback). The first look waits briefly for the replay to begin, so a
+  chat is not shown idle only because nothing was read yet. Edits are the `tool_batch` events of
+  the main session (`edit_file`, `write_file`, `delete_file`), not of its sub-agents.
+- **Following a sub-agent** draws its part of the same stream (what it says, its tool calls and the
+  first row of each result) as sheavly-v1 draws its history. A command's output has no route on
+  the server, so a command, and any child of a chat that is not running, is followed from the
+  harness files (fallback), which also keep the log of what the command printed.
+- **The last prompt** (for ordering chats) is read from the history of a running chat, and from
+  the harness files (fallback) for one that is not. A chat that is in neither has the time it last
+  changed, the nearest the server tells.
+- **The recap** is the last few messages as plain text, from the history of a running chat. A
+  chat that is not running gets sheavly-v1's recap from the harness files (fallback), which draws
+  the last turn the way the harness does.
+- **Deleting a chat** has no route yet. The harness files (fallback) are deleted for it. The
+  server keeps a conversation live after the terminal that opened it has gone, and writes to its
+  files, so the conversation is closed first (`DELETE /conversations/:id`; a 404 means it was not
+  live) and the files are removed after. The sidebar stops the chat's pane before it asks.
+- **Not there yet:** creating a chat still goes
+  through the chat command (`launch`), with `claimNewChats` matching new panes to the chats the
+  server stored, until the API says which conversation a chat opened.
+
 An adapter's own settings in the config file (for sheavly-v1: `harnessDir`, `command` and `mode`)
 are named in its definition's `settingKeys`. The config loader accepts the keys of every
 registered adapter and hands them to the chosen one as strings; it needs no change for a new

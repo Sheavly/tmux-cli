@@ -1,6 +1,6 @@
 import { cleanText } from '../../../terminal/text.ts';
 import type { RecapMessage } from '../../recap-text.ts';
-import { parseHistoryEntry, scanHistoryTail } from './history-tail.ts';
+import { parseHistoryEntry, scanHistoryTail, type HistoryEntry } from './history-tail.ts';
 
 /**
  * What one history line says for a recap: what the user typed, or what the assistant answered
@@ -8,8 +8,11 @@ import { parseHistoryEntry, scanHistoryTail } from './history-tail.ts';
  * part of the conversation you would remember.
  */
 export function parseRecapLine(line: string): RecapMessage | undefined {
-  const entry = parseHistoryEntry(line);
+  return recapMessageOf(parseHistoryEntry(line));
+}
 
+/** The same for a message already parsed, as the server's API gives it. */
+export function recapMessageOf(entry: HistoryEntry | undefined): RecapMessage | undefined {
   if (!entry || typeof entry.content !== 'string') return undefined;
 
   if (entry.role === 'user' && entry.origin === 'user') {
@@ -30,11 +33,20 @@ export function parseRecapLine(line: string): RecapMessage | undefined {
  * folded into the assistant message before it, so a long agent loop is one message and not fifty.
  */
 export function buildRecap(lines: readonly string[], limit: number): RecapMessage[] {
+  return mergeRecap(
+    lines.map((line) => parseRecapLine(line)),
+    limit,
+  );
+}
+
+/** The same for messages already read: `undefined` is what is not part of the conversation. */
+export function mergeRecap(
+  parsed: readonly (RecapMessage | undefined)[],
+  limit: number,
+): RecapMessage[] {
   const messages: RecapMessage[] = [];
 
-  for (const line of lines) {
-    const message = parseRecapLine(line);
-
+  for (const message of parsed) {
     if (!message) continue;
 
     const previous = messages.at(-1);

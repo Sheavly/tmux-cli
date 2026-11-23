@@ -4,6 +4,7 @@
   "chatOrder": "prompted",
   "escapeTime": 10,
   "lockTmux": true,
+  "extendedKeys": true,
   "mouse": {
     "scroll": true,
     "copy": true,

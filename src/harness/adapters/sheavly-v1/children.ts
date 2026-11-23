@@ -212,8 +212,11 @@ export async function updateChildren(params: { dir: string; state: ChildrenState
   });
 }
 
-/** One stream line can say something about a child and about what the chat is doing at once. */
-function foldLine(state: ChildrenState, line: string): void {
+/**
+ * One stream line can say something about a child and about what the chat is doing at once. The
+ * server's event stream sends the same entries, so sheavly-v2 folds what it receives the same way.
+ */
+export function foldLine(state: ChildrenState, line: string): void {
   const record = parseRecord(line);
   const event = childEventOf(record);
   const change = parseActivity(record);

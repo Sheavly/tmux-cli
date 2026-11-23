@@ -133,6 +133,7 @@ chat's profile from the folder it is stored in.
   "chatOrder": "prompted",
   "escapeTime": 10,
   "lockTmux": true,
+  "extendedKeys": true,
   "mouse": { "scroll": true, "copy": true, "focus": true, "sidebar": true },
   "socket": "sheavly"
 }
@@ -172,6 +173,13 @@ gone; our keys, the wheel and dragging the sidebar's border still work. Leave th
 the sidebar's detach key (`q`) instead of `C-b d`. Set it to `false` to have tmux's prefix back
 (your own prefix, if you set one, is restored); the mouse menus come back after `sheavly-tmux
 stop` and a start.
+
+`extendedKeys` (on by default) lets tmux read keys in the extended form, which keys such as
+`Ctrl+Alt+1` to `4` (the sidebar's width keys) need to be told apart from other keys. A terminal
+that sends other keys wrongly once tmux asks for them needs it `false`: in Terminator, Enter did
+nothing in a chat of the current harness until it was off. With it off, `Ctrl+Alt+digit` no longer
+arrives, so rebind the four width keys ([Keybindings](docs/keybindings.md)) to ones that do. It
+takes effect at the next start; a terminal already attached asks again when you attach.
 
 `mouse` says what the mouse may do; every action is on unless you turn it off, and `"mouse": false`
 turns all of them off. `scroll`: the wheel scrolls the chat's history, the sidebar's list, the

@@ -1,8 +1,9 @@
 import type { AdapterDefinition, HarnessAdapter } from './adapter.types.ts';
 import { SHEAVLY_V1, sheavlyV1 } from './adapters/sheavly-v1/index.ts';
+import { sheavlyV2 } from './adapters/sheavly-v2/index.ts';
 
 /** Every adapter there is. A new harness version is one more entry here. */
-const DEFINITIONS: readonly AdapterDefinition[] = [sheavlyV1];
+const DEFINITIONS: readonly AdapterDefinition[] = [sheavlyV1, sheavlyV2];
 
 const ADAPTER_NAMES: readonly string[] = DEFINITIONS.map((definition) => definition.name);
 
