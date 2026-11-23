@@ -12,13 +12,13 @@ import { claimNewChats } from './claim.ts';
 import { updateEdits } from './edits.ts';
 import { followChild } from './follow.ts';
 import { readLastPromptAt } from './last-prompt.ts';
+import { launchChoice } from './launch-choice.ts';
 import { defaultCommand, parseLaunchMode } from './launch-command.utils.ts';
 import { recapChat } from './replay.ts';
 import { chromeRows, clearPromptKeys, promptText } from './screen.ts';
 import {
   deleteChat,
   isChatId,
-  isProfileId,
   listChats,
   listProfiles,
   readChatLabel,
@@ -187,18 +187,6 @@ export function createSheavlyV1(options: SheavlyV1Options): HarnessAdapter {
   };
 }
 
-/**
- * A stored chat reopens on the profile it was started on, and sheavly ignores another one given
- * with it, so only a new chat is told which profile to start on.
- */
-function launchChoice(target: Parameters<HarnessAdapter['launch']>[0]): string {
-  if (target.chatId) return ` --resume ${requireChatId(target.chatId)}`;
-
-  if (target.profile) return ` --profile ${requireProfileId(target.profile)}`;
-
-  return '';
-}
-
 function publicChat(chat: StoredConversation): StoredChat {
   return {
     id: chat.id,
@@ -207,18 +195,4 @@ function publicChat(chat: StoredConversation): StoredChat {
     updatedAt: chat.updatedAt,
     profile: chat.profile,
   };
-}
-
-/** The id ends up in a shell command, so only a real profile id is let through. */
-function requireProfileId(id: string): string {
-  if (!isProfileId(id)) throw new Error(`Not a profile id: ${id}`);
-
-  return id;
-}
-
-/** The id ends up in a shell command, so only a real conversation id is let through. */
-function requireChatId(id: string): string {
-  if (!isChatId(id)) throw new Error(`Not a conversation id: ${id}`);
-
-  return id;
 }

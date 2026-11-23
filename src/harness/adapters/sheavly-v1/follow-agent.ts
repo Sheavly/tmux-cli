@@ -55,7 +55,10 @@ function callRows(params: { calls: unknown; columns: number }): string[] {
   });
 }
 
-function assistantBlock(params: { entry: Record<string, unknown>; columns: number }): string {
+export function assistantBlock(params: {
+  entry: Record<string, unknown>;
+  columns: number;
+}): string {
   const { entry, columns } = params;
   const text = safeText(entry.content).trim();
   const rows = [
@@ -66,7 +69,7 @@ function assistantBlock(params: { entry: Record<string, unknown>; columns: numbe
   return rows.length === 0 ? '' : `${rows.join('\n')}\n`;
 }
 
-function toolRow(params: { entry: Record<string, unknown>; columns: number }): string {
+export function toolRow(params: { entry: Record<string, unknown>; columns: number }): string {
   const { entry, columns } = params;
   const first = safeText(entry.content)
     .split('\n')

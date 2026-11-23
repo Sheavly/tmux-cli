@@ -3,7 +3,7 @@ import type { EditKind, EditState } from '../../adapter.types.ts';
 import { newCursor, readAppendedInChunks, type Cursor } from './incremental-lines.ts';
 
 /** The tools that change a file, and what each one does to it. */
-const EDIT_TOOLS: Record<string, EditKind> = {
+export const EDIT_TOOLS: Record<string, EditKind> = {
   edit_file: 'edited',
   write_file: 'written',
   delete_file: 'deleted',
@@ -78,7 +78,7 @@ export async function updateEdits(params: {
     },
     onLines: (lines) => {
       for (const change of lines.flatMap((line) => parseEditLine(line))) {
-        fold({ state, workspace, change });
+        foldEdit({ state, workspace, change });
         changed = true;
       }
     },
@@ -87,7 +87,7 @@ export async function updateEdits(params: {
   return changed;
 }
 
-function fold(params: {
+export function foldEdit(params: {
   state: EditState;
   workspace: string;
   change: { path: string; kind: EditKind; at: number };
