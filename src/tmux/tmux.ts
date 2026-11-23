@@ -9,6 +9,8 @@ export type Tmux = {
   run: (args: string[], input?: string) => Promise<string>;
 };
 
+const TMUX_TIMEOUT_MS = 10_000;
+
 class TmuxError extends Error {
   readonly args: string[];
 
@@ -30,7 +32,8 @@ export function createTmux(params: { socket: string }): Tmux {
         const child = execFile(
           'tmux',
           ['-L', socket, ...args],
-          { encoding: 'utf8' },
+          // A tmux that hangs must fail the call: the sidebar's refresh waits for every command.
+          { encoding: 'utf8', timeout: TMUX_TIMEOUT_MS },
           (error, stdout, stderr) => {
             if (error) {
               reject(new TmuxError({ args, stderr: stderr || error.message, cause: error }));

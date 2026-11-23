@@ -66,6 +66,19 @@ test('the children of a stream larger than a chunk are found at both of its ends
   );
 });
 
+test('looks at one stream made at the same time read it once, so no chunk is lost', async () => {
+  const file = await bigFile(aroundFiller());
+  const state = newChildrenState();
+  const dir = path.dirname(file);
+
+  await Promise.all([updateChildren({ dir, state }), updateChildren({ dir, state })]);
+
+  assert.deepEqual(
+    runningChildren({ state, since: 0 }).map((child) => child.name),
+    ['Last', 'First'],
+  );
+});
+
 test('a file that is not there is reported as missing', async () => {
   const found = await readAppendedInChunks({
     file: path.join(tmpdir(), 'no-such-sheavly-dir', 'stream.jsonl'),

@@ -26,6 +26,7 @@ import { refresh } from './refresh.ts';
 import { clearScreen } from './screen.ts';
 import { PANE_REFRESH_MS } from './sidebar.constants.ts';
 import type { SidebarContext, SidebarState } from './sidebar.types.ts';
+import { singleFlight } from './single-flight.ts';
 
 function initialState(): SidebarState {
   return {
@@ -111,7 +112,9 @@ export async function runSidebar(params: {
     draw: () => {
       drawScreen(ctx);
     },
-    refresh: () => refresh(ctx),
+    // A refresh that outlasts the timer (a first read of a huge stream, a slow tmux) must not be
+    // started again on top of itself.
+    refresh: singleFlight(() => refresh(ctx)),
   };
 
   try {

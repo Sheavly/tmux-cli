@@ -56,10 +56,13 @@ export type ChildrenState = {
   sessions: Map<string, Session>;
   tasks: Map<string, Task>;
   activity: ActivityState;
+  /** The read in progress, which the next one waits for; see `updateChildren`. */
+  reading: Promise<void>;
 };
 
 export function newChildrenState(): ChildrenState {
   return {
+    reading: Promise.resolve(),
     cursor: newCursor(),
     sessions: new Map(),
     tasks: new Map(),
@@ -196,6 +199,19 @@ function fold(state: ChildrenState, event: ChildEvent): void {
  * that got shorter starts over. Nothing happens when the conversation has no stream yet.
  */
 export async function updateChildren(params: { dir: string; state: ChildrenState }): Promise<void> {
+  const { state } = params;
+  const turn = state.reading.then(() => readStream(params));
+
+  // The next caller waits for this read, whether it worked or not.
+  state.reading = turn.catch(() => undefined);
+  await turn;
+}
+
+/**
+ * One read at a time per state: the cursor moves only after each `await`, so two reads at once
+ * would take the same chunk twice, lose the one after it and leave a half line in `carry`.
+ */
+async function readStream(params: { dir: string; state: ChildrenState }): Promise<void> {
   const { dir, state } = params;
 
   await readAppendedInChunks({
