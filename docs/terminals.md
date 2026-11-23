@@ -44,6 +44,17 @@ Over a slow ssh connection an Alt key can arrive as an Escape and, a moment late
 then takes them for two. `escapeTime` in the config (milliseconds, 10 by default) is how long tmux
 waits for the second part; 50 to 100 is usual for ssh.
 
+## Extended keys
+
+tmux is told to read keys in the extended form (`extended-keys`), because a key such as `Ctrl+Alt+1`
+(the sidebar's width keys) is otherwise nothing it can tell from other keys. When it does, tmux
+also asks the terminal to send them that way, and a program in a pane that asks for them too, such
+as the harness's chat input, gets them. Not every terminal does that well: in Terminator (VTE),
+Enter did nothing in a chat of the current harness while it was on, and worked again with it off.
+Set `"extendedKeys": false` in the config for such a terminal (README, Settings); the width keys
+then need other keys, since `Ctrl+Alt+digit` no longer arrives. It takes effect at the next start.
+If a key does nothing in one terminal and works in another, this is the first thing to try.
+
 ## The mouse
 
 The mouse is on in our tmux, so clicking a pane focuses it and the wheel scrolls. While it is on, the

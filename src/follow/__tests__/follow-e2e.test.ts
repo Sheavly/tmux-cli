@@ -104,7 +104,12 @@ test(
 
     // The workspace row, the chat, then the sub-agent.
     await tmux.run(['send-keys', '-t', sidebar, 'Down', 'Down', 'Enter']);
-    await until(async () => (await role('follow')) !== undefined, 'a follow pane');
+    // A follow pane starts in the parked session and is swapped in a moment later, so it is the
+    // pane being on screen that is waited for, not its existing.
+    await until(
+      async () => (await role('follow'))?.session === MAIN_SESSION,
+      'a follow pane on screen',
+    );
 
     const agentPane = (await role('follow')) as NonNullable<Awaited<ReturnType<typeof role>>>;
 

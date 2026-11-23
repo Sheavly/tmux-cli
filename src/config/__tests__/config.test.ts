@@ -78,13 +78,15 @@ test('chatOrder is "prompted" unless the file says "started", and nothing else i
   );
 });
 
-test('tmux’s own keys are locked in the session unless the file says lockTmux is false', () => {
+test('tmux’s own keys are locked, and extended keys read, unless the file says false', () => {
   const load = (text: string) => loadConfig({ env: {}, home: '/h', readFile: () => text });
 
-  assert.equal(loadConfig({ env: {}, home: '/h', readFile: missing }).lockTmux, true);
-  assert.equal(load('{"lockTmux":true}').lockTmux, true);
-  assert.equal(load('{"lockTmux":false}').lockTmux, false);
-  assert.throws(() => load('{"lockTmux":"no"}'), /"lockTmux" must be true or false/);
+  for (const key of ['lockTmux', 'extendedKeys'] as const) {
+    assert.equal(loadConfig({ env: {}, home: '/h', readFile: missing })[key], true, key);
+    assert.equal(load(`{"${key}":true}`)[key], true, key);
+    assert.equal(load(`{"${key}":false}`)[key], false, key);
+    assert.throws(() => load(`{"${key}":"no"}`), new RegExp(`"${key}" must be true or false`));
+  }
 });
 
 test('every mouse action is on unless the file turns it off, one by one or all together', () => {

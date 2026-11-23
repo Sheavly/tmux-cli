@@ -45,6 +45,12 @@ export type Config = {
    * leaves tmux as it is, for someone who wants its prefix keys there.
    */
   lockTmux: boolean;
+  /**
+   * Whether tmux reads keys in the extended form, which Ctrl+Alt+digit needs (the sidebar's width
+   * keys). On by default. A terminal that sends other keys wrongly once tmux asks for them (Enter
+   * in a chat, in Terminator) needs it off: see `docs/terminals.md`.
+   */
+  extendedKeys: boolean;
   /** Which things the mouse may do; all of them unless the file turns some off. */
   mouse: MouseSettings;
   /** The tmux socket name: a server of its own, so no other tmux settings or bindings are touched. */
@@ -58,6 +64,7 @@ const FILE_KEYS = [
   'chatOrder',
   'escapeTime',
   'lockTmux',
+  'extendedKeys',
   'mouse',
   'socket',
   'keys',
@@ -95,6 +102,7 @@ export function loadConfig(
     chatOrder: file.chatOrder ?? 'prompted',
     escapeTime: file.escapeTime,
     lockTmux: file.lockTmux ?? true,
+    extendedKeys: file.extendedKeys ?? true,
     mouse: file.mouse ?? MOUSE_ALL,
     socket: file.socket ?? 'sheavly',
   };
@@ -111,6 +119,7 @@ type FileConfig = {
   chatOrder?: ChatOrder;
   escapeTime?: number;
   lockTmux?: boolean;
+  extendedKeys?: boolean;
   mouse?: MouseSettings;
   socket?: string;
   keys?: KeyOverrides;
@@ -157,6 +166,7 @@ function parseConfigFile(params: { file: string; text: string }): FileConfig {
     ...(record.keys === undefined ? {} : { keys: parseKeyOverrides({ file, value: record.keys }) }),
     ...booleanField({ file, record, key: 'acceptUnboundKeys' }),
     ...booleanField({ file, record, key: 'lockTmux' }),
+    ...booleanField({ file, record, key: 'extendedKeys' }),
     ...(record.mouse === undefined
       ? {}
       : { mouse: parseMouseSettings({ file, value: record.mouse }) }),

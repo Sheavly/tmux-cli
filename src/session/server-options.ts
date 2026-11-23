@@ -19,8 +19,10 @@ export async function applyServerOptions(params: {
   look: TerminalLook;
   /** How long tmux waits after an Escape for the rest of a key (milliseconds). */
   escapeTime?: number | undefined;
+  /** Whether tmux reads keys in the extended form (the default); see `applyExtendedKeys`. */
+  extendedKeys?: boolean | undefined;
 }): Promise<void> {
-  const { tmux, look, escapeTime = DEFAULT_ESCAPE_TIME_MS } = params;
+  const { tmux, look, escapeTime = DEFAULT_ESCAPE_TIME_MS, extendedKeys = true } = params;
   const options: Option[] = [
     ['-g', 'remain-on-exit', 'on'],
     ['-g', 'history-limit', '50000'],
@@ -32,7 +34,7 @@ export async function applyServerOptions(params: {
     ['-g', 'status-right', `#{${LOADING_OPTION}}`],
     ...dividerOptions(look.background),
     ['-s', 'escape-time', String(escapeTime)],
-    ['-s', 'extended-keys', 'on'],
+    ['-s', 'extended-keys', extendedKeys ? 'on' : 'off'],
     // Copying in copy mode reaches the system clipboard through the terminal (OSC 52).
     ['-s', 'set-clipboard', 'on'],
     // Otherwise tmux picks vi or emacs keys from $EDITOR, and word jumps land differently.
@@ -48,7 +50,7 @@ export async function applyServerOptions(params: {
     await tmux.run(['set-option', '-g', '@sheavly_background', look.background]);
   }
 
-  await applyExtendedKeys(tmux);
+  await applyExtendedKeys({ tmux, on: extendedKeys });
   await applyColour({ tmux, truecolor: look.truecolor === true });
   await applyClipboardCommand({ tmux, command: look.clipboardCommand });
 }
@@ -57,8 +59,22 @@ export async function applyServerOptions(params: {
  * `extended-keys on` only lets tmux read keys a terminal reports in the extended form; whether
  * tmux asks the terminal to report them is a terminal feature, which tmux knows for few terminals.
  * Without it a key such as Ctrl+Alt+2 arrives as nothing tmux can tell from other keys.
+ *
+ * Some terminals break other keys once tmux asks: in Terminator, Enter did nothing in a chat of
+ * the current harness, whose input asks for the extended form too, and went back to working with
+ * this off. `extendedKeys: false` in the config is for them. The feature is taken off again, so a
+ * server that was started with it on does not keep asking; the colour feature, which shares the
+ * option, is put back after.
  */
-async function applyExtendedKeys(tmux: Tmux): Promise<void> {
+async function applyExtendedKeys(params: { tmux: Tmux; on: boolean }): Promise<void> {
+  const { tmux, on } = params;
+
+  if (!on) {
+    await tmux.run(['set-option', '-su', 'terminal-features']);
+
+    return;
+  }
+
   const features = await tmux.run(['show-options', '-sv', 'terminal-features']);
 
   if (!features.includes(':extkeys')) {
