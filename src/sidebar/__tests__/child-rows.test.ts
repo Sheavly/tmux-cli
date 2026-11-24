@@ -123,3 +123,24 @@ test('a child row says what it is, is indented by its depth and fills the width 
   assert.ok(lines.includes('        ▸ npm test'));
   assert.ok(lines.includes('    ∞ dev server'));
 });
+
+test('a screen narrower than its divider draws without throwing, as a resize passes through one', () => {
+  const rows = rowsOf({});
+
+  for (const width of [0, 1, 2, 3]) {
+    assert.doesNotThrow(() =>
+      renderScreen({
+        rows,
+        cursor: 0,
+        scrollTop: 0,
+        width,
+        height: 5,
+        now: 100,
+        home: '/h',
+        footer: ['x'],
+        divider: true,
+        focus: 'sidebar',
+      }),
+    );
+  }
+});

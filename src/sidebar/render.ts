@@ -94,7 +94,12 @@ export function renderScreen(screen: Screen): {
   items: ItemsOnScreen;
 } {
   const { rows, cursor, height, footer } = screen;
-  const inner = { ...screen, width: screen.width - (screen.divider ? GUTTER.length : 0) };
+  // A terminal that is slow to settle reports a width of 0 or 1 mid-resize; `repeat` throws on a
+  // negative count, and a throw in the resize handler kills the sidebar.
+  const inner = {
+    ...screen,
+    width: Math.max(0, screen.width - (screen.divider ? GUTTER.length : 0)),
+  };
   const titleLines =
     screen.title === undefined
       ? []
@@ -175,7 +180,8 @@ export function renderBrowser(params: {
   focus: Focus;
 }): { lines: string[]; scrollTop: number } {
   const { items, cursor, height, footer } = params;
-  const width = params.width - (params.divider ? GUTTER.length : 0);
+  // Never negative: see renderScreen.
+  const width = Math.max(0, params.width - (params.divider ? GUTTER.length : 0));
   const visible = Math.max(1, height - footer.length - 1);
   // A negative cursor means nothing is selected (the help text), so there is no row to keep in
   // view and the scroll position is whatever the caller asks for.
